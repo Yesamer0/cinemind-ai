@@ -5,7 +5,8 @@ from recommender import (
     best_movies_by_genre,
     display_movies
 )
-
+from content_based import recommend_movies
+from content_based import recommend_by_keyword
 
 from data_loader import (
     load_movies,
@@ -270,3 +271,48 @@ print(final_dataset.head())
 
 print("\nFinal Dataset Shape")
 print(final_dataset.shape)
+
+
+
+print("\nContent-Based Recommendations")
+
+recommendations = recommend_movies("Toy Story")
+
+for movie in recommendations:
+    print(
+        f"{movie['title']} "
+        f"({movie['similarity']:.2f})"
+    )
+
+
+print("\n========== CineMind AI ==========")
+
+while True:
+
+    keyword = input("\nEnter a keyword (q to quit): ")
+
+    if keyword.lower() == "q":
+        print("\nGoodbye!")
+        break
+
+    if not keyword.strip():
+        print("Please enter a keyword.")
+        continue
+
+    print("\nSearching for similar movies...\n")
+
+    results = recommend_by_keyword(keyword)
+
+    if results.empty:
+        print("No movies found.")
+        continue
+
+    print("\nTop Recommendations\n")
+
+    for i, row in enumerate(results.itertuples(), start=1):
+
+        print(f"{i}. {row.title}")
+
+        print(f"Overview: {row.overview}")
+
+        print("=" * 80)

@@ -117,3 +117,71 @@ Debugging techniques
 -
 links.csv, MovieLens ile TMDB arasında köprü görevi görüyor.
 Aynı filmi iki farklı veri tabanında eşleştirebilmemizi sağlıyor.
+
+sprint5- content-based recommendation
+vectorization = yazıyı sayıya dönüştürmek love=3 mesela
+tf-ıdf -> term frequency - ınverse document frequency
+tf= kelime kaç defa geçmiş 
+ıdf= ayırt edicileri seçiyor the a falan almıyor.
+tf-ıdf = ikisini de birleştiriyor
+
+scikit-learn=sklearn=içinde  TF-IDF Cosine Similarity  KNN Decision Tree  Random Forest  Logistic Regression K-Means PCA Naive Bayes
+Yani machine learning araç kutusu
+cosine similarity= filmleri karşılaştırır=İki vektör arasındaki benzerliği hesaplıyor.
+| Dosya          | Görevi               |
+| -------------- | -------------------- |
+| data_loader.py | Veriyi yüklemek      |
+| recommender.py | Tür bazlı öneriler   |
+| main.py        | Programı çalıştırmak |
+fit_transform
+
+İkisini tek seferde yapıyor.
+
+Veriyi öğren.
+Sayıya dönüştür.
+matrix= sayı ve sütunlardan oluşan sayı tablosu 
+✅ enumerate() → Her elemana sıra numarası ekler.
+
+✅ lambda → Kısa, tek satırlık fonksiyon yazma yöntemi.
+
+✅ sorted() → Listeyi sıralar.
+
+✅ reverse=True → Büyükten küçüğe sıralar.
+loc Etikete göre seçer.
+iloc Satır numarasına göre seçer.
+
+Kullanıcı
+↓
+Toy Story
+↓
+Toy Story'nin indexini bul
+↓
+Similarity Matrix'in Toy Story satırını al
+↓
+En yüksek puanları sırala
+↓
+Toy Story'yi çıkar
+↓
+İlk 5 filmi al
+↓
+İndeksleri film isimlerine çevir
+↓
+Kullanıcıya listeyi döndür
+
+✅ iloc → Satır numarasına göre veri seçme
+✅ append() → Listeye yeni eleman ekleme
+✅ Dictionary ({}) → Yapısal veri tutma
+✅ for index, score in ... → Tuple açma (unpacking)
+✅ f"{...:.2f}" → Ondalık sayıyı 2 basamak gösterme
+
+re = Regular Expressions (Regex)
+
+Yani metin temizlemek için kullanılan Python kütüphanesi.
+
+CLI (Command Line Interface) oluşturuyoruz.
+
+Yani program artık kullanıcıyla konuşuyor.
+
+itertuples()
+
+Bir DataFrame'in satırlarını tek tek dolaşmamızı sağlar.
