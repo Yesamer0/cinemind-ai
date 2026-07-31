@@ -185,3 +185,52 @@ Yani program artık kullanıcıyla konuşuyor.
 itertuples()
 
 Bir DataFrame'in satırlarını tek tek dolaşmamızı sağlar.
+
+
+| Kavram                | Ne işe yarıyor?                                     |
+| --------------------- | --------------------------------------------------- |
+| **Text Cleaning**     | Metni temizler.                                     |
+| **Stopwords**         | Gereksiz kelimeleri siler.                          |
+| **TF-IDF**            | Metni sayılara dönüştürür.                          |
+| **Vectorization**     | Her filmi bir sayı listesi (vektör) haline getirir. |
+| **Scikit-learn**      | Bu işlemleri yapan makine öğrenmesi kütüphanesi.    |
+| **Cosine Similarity** | İki metnin ne kadar benzediğini hesaplar.           |
+| **argsort()**         | En yüksek benzerlik puanlarını sıralar.             |
+| **iloc()**            | Bu puanlara karşılık gelen filmleri getirir.        |
+6.sprint
+Embedding, bir kelimeyi veya cümleyi ANLAMINI temsil eden sayılara çevirir.
+Sentence Transformer bu milyonlarca cümleyle eğitilmiş bir hazır AI modeli
+-AI Modeli oluşturuyor
+Transformer
+
+Google'ın geliştirdiği
+
+çok güçlü bir yapay zekâ mimarisi.
+
+Pooling ise diyor ki Bunların hepsini tek bir vektöre dönüştür.
+
+Normalize demek vektörü standart hale getirmek.
+
+model.encode() metodu (özellikle Sentence-Transformers veya Hugging Face kütüphanelerinde), verilen bir metni veya metin listesini sayısal vektörlere (embeddings) dönüştürür.
+
+Kısacası: Metnin anlamsal içeriğini bilgisayarların anlayabileceği ve matematiksel olarak kıyaslayabileceği bir "anlam vektörüne" çevirir.
+.tolist()=Listeye çevirmek için
+.Çünkü AI modeli (SentenceTransformer) Python listesini daha 
+rahat işler.
+# Sprint 6 Progress
+
+Today I implemented an AI-powered semantic movie recommendation system.
+
+Completed tasks:
+
+- Learned how embeddings work.
+- Integrated Sentence Transformers.
+- Generated embeddings for over 44,000 movies.
+- Saved embeddings with pickle to avoid recalculation.
+- Implemented semantic search using cosine similarity.
+- Added user input for dynamic movie recommendations.
+- Refactored the code using the main() function.
+
+Outcome:
+
+The recommendation system can now understand the meaning of user queries instead of relying only on keyword matching.

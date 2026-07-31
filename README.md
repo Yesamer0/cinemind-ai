@@ -56,3 +56,24 @@ Output:
 - Scikit-learn
 - TF-IDF
 - Cosine Similarity
+
+## Sprint 6 - Semantic Search with AI
+
+### Completed Features
+
+- Added semantic movie search using Sentence Transformers.
+- Loaded and processed TMDB movie overviews.
+- Generated AI embeddings for all movies.
+- Saved embeddings using pickle for faster loading.
+- Implemented cosine similarity for semantic recommendations.
+- Added interactive user input for movie search.
+- Displayed similarity scores for recommended movies.
+- Organized the application using a main() function.
+
+### Technologies
+
+- Sentence Transformers
+- scikit-learn
+- Cosine Similarity
+- Pickle
+- Pandas

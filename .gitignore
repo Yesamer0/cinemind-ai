@@ -2,3 +2,5 @@ dataset/
 venv/
 __pycache__/
 *.pyc
+# AI Embeddings
+movie_embeddings.pkl
