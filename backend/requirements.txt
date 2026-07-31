@@ -4,3 +4,5 @@ python-dateutil==2.9.0.post0
 six==1.17.0
 tzdata==2026.3
 scikit-learn==1.7.1
+sentence-transformers==2.2.2
+torch==2.6.0
