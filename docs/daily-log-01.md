@@ -234,3 +234,30 @@ Completed tasks:
 Outcome:
 
 The recommendation system can now understand the meaning of user queries instead of relying only on keyword matching.
+
+Yani Swagger aslında API test ekranı.
+sentence-transformers = cümleleri anlayan ve onları sayısal vektöre dönüştüren AI modeli
+# Convert movie descriptions and user queries into numerical vectors
+# so we can compare their semantic similarity.
+
+
+# Sprint 7
+
+## Date
+03.08.2026
+
+## Tasks Completed
+
+- Installed FastAPI
+- Installed Uvicorn
+- Created api.py
+- Created GET endpoints
+- Learned Swagger documentation
+- Connected Semantic Search with FastAPI
+- Fixed import issues
+- Returned JSON responses
+- Successfully tested the API
+
+## Result
+
+The CineMind backend can now provide AI-powered movie recommendations through a REST API.

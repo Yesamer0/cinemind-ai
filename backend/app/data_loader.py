@@ -1,6 +1,6 @@
 import pandas as pd
 
-from config import (
+from backend.app.config import (
     LINKS_PATH,
     MOVIES_PATH,
     RATINGS_PATH,
