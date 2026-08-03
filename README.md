@@ -77,3 +77,20 @@ Output:
 - Cosine Similarity
 - Pickle
 - Pandas
+
+
+## Sprint 7 - FastAPI Integration
+
+### Completed
+- Installed FastAPI and Uvicorn
+- Created the first REST API
+- Added Swagger documentation
+- Connected Semantic Search with FastAPI
+- Returned movie recommendations as JSON
+- Tested API endpoints successfully
+
+### Technologies
+- FastAPI
+- Uvicorn
+- Sentence Transformers
+- Cosine Similarity

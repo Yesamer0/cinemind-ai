@@ -4,7 +4,7 @@ import os
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
-from data_loader import load_tmdb_movies
+from backend.app.data_loader import load_tmdb_movies
 
 
 print("Loading AI model...")
@@ -54,20 +54,31 @@ print(movie_embeddings.shape)
 
 def semantic_search(query, top_n=5):
 
+    # Convert user query into an embedding
     query_embedding = model.encode(query)
 
+    # Calculate cosine similarity
     similarities = cosine_similarity(
         [query_embedding],
         movie_embeddings
     )[0]
 
+    # Sort movies by similarity score
     sorted_indices = similarities.argsort()[::-1]
 
+    # Get top N movie indices
     top_indices = sorted_indices[:top_n]
 
-    return top_indices, similarities
+    results = []
 
+    for idx in top_indices:
 
+        results.append({
+            "title": movies.iloc[idx]["title"],
+            "score": float(similarities[idx])
+        })
+
+    return results
 
 # Main function: starts the program and handles user interaction.
 # It runs only when this file is executed directly.
