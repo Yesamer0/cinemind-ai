@@ -94,3 +94,26 @@ Output:
 - Uvicorn
 - Sentence Transformers
 - Cosine Similarity
+
+## Sprint 8 - Advanced REST API Features
+
+### Completed Features
+
+- Movie Detail Endpoint
+- Movie List Endpoint
+- Pagination
+- Sorting
+- Input Validation
+- Search Limit
+- Semantic Search Improvements
+- Better JSON Responses
+
+### API Endpoints
+
+GET /
+
+GET /search
+
+GET /movie/{movie_id}
+
+GET /movies

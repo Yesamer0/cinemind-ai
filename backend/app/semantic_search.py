@@ -15,7 +15,7 @@ print("Model loaded successfully!")
 
 
 movies = load_tmdb_movies()
-
+print(movies.columns.tolist())
 print("\nNumber of Movies")
 print(len(movies))
 
@@ -72,11 +72,13 @@ def semantic_search(query, top_n=5):
     results = []
 
     for idx in top_indices:
-
         results.append({
-            "title": movies.iloc[idx]["title"],
-            "score": float(similarities[idx])
-        })
+                "id": int(idx),
+                "title": movies.iloc[idx]["title"],
+                "overview": movies.iloc[idx]["overview"],
+                "score": round(float(similarities[idx]), 3)
+            })
+
 
     return results
 
