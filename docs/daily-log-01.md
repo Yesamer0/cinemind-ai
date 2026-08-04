@@ -261,3 +261,61 @@ sentence-transformers = cümleleri anlayan ve onları sayısal vektöre dönüş
 ## Result
 
 The CineMind backend can now provide AI-powered movie recommendations through a REST API.
+
+venv\Scripts\activate = venve aktif
+Çünkü idx aslında numpy.int64 tipinde olabilir. JSON'a göndermeden önce normal Python int'ine çeviriyoruz.
+
+Bir endpoint, API'nin kapısıdır.
+
+Mesela evini düşün.
+
+Evinin:
+
+🚪 Ana kapısı
+🚪 Balkon kapısı
+🚪 Garaj kapısı
+
+var.
+
+Hepsi aynı eve ait ama farklı işler yapıyor.
+
+API'de de aynı mantık var.
+
+Bizim API'mizde şu an:
+
+GET /
+
+➡️ Ana sayfa
+
+GET /search
+
+➡️ Film ara
+
+GET /movie/{id}
+
+➡️ Tek filmin detayını getir
+
+İşte bunların her biri bir endpoint'tir.
+
+HTTPException demek:
+
+"FastAPI, kullanıcıya düzgün bir hata mesajı gönder."
+
+input validation (girdi doğrulama)
+
+# Sprint 8
+
+## Completed
+
+- Improved REST API
+- Added Movie Detail endpoint
+- Added Movie List endpoint
+- Added Pagination
+- Added Sorting
+- Added Input Validation
+- Improved Search API
+- Tested all endpoints using Swagger UI
+
+## Status
+
+Sprint 8 Completed Successfully
