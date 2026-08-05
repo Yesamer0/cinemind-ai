@@ -319,3 +319,106 @@ input validation (girdi doğrulama)
 ## Status
 
 Sprint 8 Completed Successfully
+
+REST API, istemci (client) ile sunucu (server) arasında HTTP istekleri kullanarak veri alışverişi yapan bir yazılım arayüzüdür.
+Endpoint, API içerisindeki belirli bir URL'dir ve belirli bir görevi yerine getirir.
+Path Parameter = URL'nin bir parçası olarak gönderilen değişkendir.
+
+Marketten diyorsun ki
+
+Bana kola getir.
+
+Kasiyer soruyor.
+
+Büyük mü küçük mü?
+
+İşte sonradan verilen bilgiler Query Parameter.
+
+
+input validation = Kullanıcıdan gelen verinin kurallara uygun olup olmadığını kontrol etmektir.
+
+Telefon alıyorsun.
+
+Kullanım kılavuzu var.
+
+Swagger da API'nin kullanım kılavuzu.
+
+React, kullanıcı arayüzü (User Interface - UI) oluşturmak için kullanılan açık kaynaklı bir JavaScript kütüphanesidir (library). Facebook (Meta) tarafından geliştirilmiştir.
+anım
+
+Component, React uygulamasının yeniden kullanılabilen küçük bir parçasıdır.
+
+Her component tek bir görevi yerine getirir.
+
+JSX (JavaScript XML), JavaScript içerisinde HTML benzeri kod yazmamızı sağlayan özel bir sözdizimidir.
+
+React aslında JSX'i JavaScript'e dönüştürerek çalıştırır.
+
+Library (Kütüphane): Sadece ihtiyacın olan araçları kullanırsın. React buna örnektir.
+Framework: Uygulamanın genel yapısını da belirler. Örneğin Angular veya Django.
+
+| Dosya/Klasör      | Görevi                                                       |
+| ----------------- | ------------------------------------------------------------ |
+| **src/**          | Uygulamanın tüm React kodları burada olacak.                 |
+| **App.jsx**       | Ana React component'i. İlk değiştireceğimiz dosya.           |
+| **main.jsx**      | React uygulamasını başlatır. Genellikle çok az değiştirilir. |
+| **App.css**       | App component'inin stilleri.                                 |
+| **index.css**     | Genel CSS dosyası.                                           |
+| **public/**       | Logo, resim gibi herkese açık dosyalar.                      |
+| **package.json**  | Projenin kullandığı paketleri ve komutları tutar.            |
+| **node_modules/** | `npm install` ile indirilen kütüphaneler. Elle düzenlenmez.  |
+
+
+export default SearchBar;
+
+şunu söyler:
+
+"Bu component'i başka dosyalar da kullanabilir."
+
+Şu an SearchBar.jsx dosyasını oluşturduk.
+Ama React henüz onun varlığını bilmiyor.
+Çünkü sadece dosyayı oluşturmak yetmez.
+Onu kullanacağımız dosyaya import etmemiz 
+gerekir.
+
+component kullanma adımları= 1.component oluştur
+2.export et
+3.başka dosyada import et
+4.jsx içinde kullan
+
+State, bir React component'inin zamanla değişebilen verileridir.
+
+State değiştiğinde React ilgili component'i yeniden render (yeniden çizim) eder.
+
+useState, React'in state oluşturmak için kullandığı Hook'tur.(kanca)
+
+event function = Yani butona basılınca çalışacak fonksiyon.
+
+handleSearch()= butona basınca çalışıyor
+
+Fetch API, JavaScript'in başka bir sunucudan veri almak veya veri göndermek için kullandığı yerleşik (built-in) fonksiyondur.
+
+response.json() -JSON verisini JavaScript nesnesine çeviriyor.
+
+CORS (Cross-Origin Resource Sharing), tarayıcının güvenlik mekanizmasıdır.
+
+Tarayıcı, farklı adreslerde çalışan uygulamaların birbiriyle konuşmasını varsayılan olarak engeller.
+
+function MovieCard({ movie })
+
+Bu Props denilen kavramdır.
+
+Props = Bir component'e dışarıdan veri göndermek.
+
+map() nedir?
+
+map(), dizinin (Array) her elemanı için işlem yapar.
+
+SearchBar → Veriyi alır.
+App → Veriyi saklar ve yönetir.
+MovieList → Listeyi oluşturur.
+MovieCard → Tek bir filmi gösterir.
+
+useEffect'in görevi
+
+Sayfa açıldığında otomatik bir işlem yapmak.

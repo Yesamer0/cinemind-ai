@@ -1,7 +1,15 @@
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 from backend.app.semantic_search import semantic_search, movies
 # Create the FastAPI application instance
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5174"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # Home endpoint
@@ -45,6 +53,23 @@ def get_movies(
     for i in range(offset, min(end, len(sorted_movies))):
 
         movie = sorted_movies.iloc[i]
+
+        results.append({
+            "id": i,
+            "title": movie["title"],
+            "overview": movie["overview"]
+        })
+
+    return results
+# Return the first 10 movies when the application starts.
+@app.get("/popular")
+def popular_movies():
+
+    results = []
+
+    for i in range(10):
+
+        movie = movies.iloc[i]
 
         results.append({
             "id": i,

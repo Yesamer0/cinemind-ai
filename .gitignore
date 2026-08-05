@@ -1,6 +1,20 @@
-dataset/
+# Python
 venv/
 __pycache__/
 *.pyc
-# AI Embeddings
+
+# React
+node_modules/
+dist/
+
+# Environment
+.env
+
+# VS Code
+.vscode/
+
+# Large datasets
+dataset/tmdb/
+
+# AI embeddings
 movie_embeddings.pkl
