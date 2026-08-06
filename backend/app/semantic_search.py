@@ -20,8 +20,15 @@ print("\nNumber of Movies")
 print(len(movies))
 
 
-movies = movies[["title", "overview"]]
-
+movies = movies[
+    [
+        "title",
+        "overview",
+        "genres",
+        "vote_average",
+        "release_date"
+    ]
+]
 movies = movies.dropna(subset=["overview"])
 
 print("\nFirst Movies")
@@ -73,12 +80,14 @@ def semantic_search(query, top_n=5):
 
     for idx in top_indices:
         results.append({
-                "id": int(idx),
-                "title": movies.iloc[idx]["title"],
-                "overview": movies.iloc[idx]["overview"],
-                "score": round(float(similarities[idx]), 3)
-            })
-
+    "id": int(idx),
+    "title": movies.iloc[idx]["title"],
+    "overview": movies.iloc[idx]["overview"],
+    "genres": movies.iloc[idx]["genres"],
+    "rating": movies.iloc[idx]["vote_average"],
+    "release_date": movies.iloc[idx]["release_date"],
+    "score": round(float(similarities[idx]), 3)
+})
 
     return results
 

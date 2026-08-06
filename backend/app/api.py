@@ -5,7 +5,10 @@ from backend.app.semantic_search import semantic_search, movies
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5174"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:5174"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -78,3 +81,24 @@ def popular_movies():
         })
 
     return results
+
+
+@app.get("/movie/{movie_id}")
+def get_movie(movie_id: int):
+
+    if movie_id < 0 or movie_id >= len(movies):
+        raise HTTPException(
+            status_code=404,
+            detail="Movie not found"
+        )
+
+    movie = movies.iloc[movie_id]
+
+    return {
+    "id": movie_id,
+    "title": movie["title"],
+    "overview": movie["overview"],
+    "genres": movie["genres"],
+    "rating": movie["vote_average"],
+    "release_date": movie["release_date"]
+}
