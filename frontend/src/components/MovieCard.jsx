@@ -1,21 +1,30 @@
+import { Link } from "react-router-dom";
+
 function MovieCard({ movie }) {
   return (
-    <div
+    <Link
+      to={`/movie/${movie.id}`}
       style={{
-        border: "1px solid gray",
-        borderRadius: "10px",
-        padding: "15px",
-        marginBottom: "15px"
+        textDecoration: "none",
+        color: "inherit"
       }}
     >
-      <h2>{movie.title}</h2>
+      <div
+        style={{
+          border: "1px solid gray",
+          borderRadius: "10px",
+          padding: "15px",
+          marginBottom: "15px",
+          cursor: "pointer"
+        }}
+      >
+        <h2>{movie.title}</h2>
 
-      <p>{movie.overview}</p>
+        <p>{movie.overview}</p>
 
-      <strong>
-        ⭐ Score: {movie.score}
-      </strong>
-    </div>
+        <strong>⭐ Score: {movie.score}</strong>
+      </div>
+    </Link>
   );
 }
 

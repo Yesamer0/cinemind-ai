@@ -422,3 +422,114 @@ MovieCard → Tek bir filmi gösterir.
 useEffect'in görevi
 
 Sayfa açıldığında otomatik bir işlem yapmak.
+
+# Sprint 8 — React Frontend
+
+## Goals
+- Build the React frontend.
+- Connect React with the FastAPI backend.
+- Display AI-powered movie recommendations.
+- Improve user experience.
+
+## Completed Tasks
+
+✔ Created React project with Vite.
+
+✔ Learned JSX and Components.
+
+✔ Built reusable React components.
+
+- SearchBar
+- MovieCard
+- MovieList
+
+✔ Learned Props.
+
+✔ Learned useState.
+
+✔ Learned useEffect.
+
+✔ Connected React to FastAPI.
+
+✔ Used Fetch API.
+
+✔ Switched from Fetch API to Axios.
+
+✔ Implemented movie search.
+
+✔ Displayed movie recommendations.
+
+✔ Added Loading State.
+
+✔ Added Error Handling.
+
+✔ Tested React ↔ FastAPI communication.
+
+## Technologies
+
+- React
+- Vite
+- Axios
+- FastAPI
+- REST API
+- Semantic Search
+
+## Result
+
+Sprint 8 completed successfully.
+
+The CineMind AI frontend can now communicate with the backend and display AI-generated movie recommendations in real time.
+
+useParams
+Nedir?
+
+URL'deki değişkeni okumamızı sağlar.
+
+BrowserRouter
+
+Bütün uygulamada yönlendirmeyi aktif eder.
+
+Routes
+
+Tüm sayfaları içinde tutar.
+
+Route
+
+Belirli URL'yi belirli sayfaya bağlar.
+
+useParams()
+
+React Router'ın Hook'udur.
+
+URL'den değişken okumaya yarar.
+
+useEffect= sayfa açıldığında çalışır
+Axios GET= Backende istek gönderir
+response.data= backendin döndürdüğü jsonu alır
+state güncelleme = veriyi react stateine kaydeder
+
+# Daily Log – Sprint 9
+
+## Date
+06.08.2026
+
+## Tasks Completed
+
+- Added React Router
+- Created Home page
+- Created Movie Detail page
+- Added dynamic routing
+- Connected React to FastAPI using Axios
+- Implemented Movie Detail API endpoint
+- Displayed movie title
+- Displayed overview
+- Displayed genres
+- Displayed rating
+- Displayed release date
+- Fixed CORS issues
+- Tested complete navigation flow
+
+## Result
+
+Sprint 9 completed successfully.
+The application now supports navigation between movie search results and detailed movie pages.

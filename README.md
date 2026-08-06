@@ -117,3 +117,95 @@ GET /search
 GET /movie/{movie_id}
 
 GET /movies
+
+# 🎬 CineMind AI
+
+An AI-powered movie recommendation system that combines semantic search with a modern React frontend.
+
+## Features
+
+- 🤖 AI Semantic Movie Search
+- 🎯 Sentence Transformers
+- 🔍 Semantic Search
+- ⚡ FastAPI REST API
+- 🌐 React Frontend
+- 🔗 React + FastAPI Integration
+- 📦 Axios API Requests
+- ⏳ Loading State
+- ❌ Error Handling
+- 📄 Swagger API Documentation
+- 🎬 Movie Search
+- 📚 Movie Details
+- 📑 Pagination
+- 🔎 Sorting
+
+## Tech Stack
+
+### Backend
+- Python
+- FastAPI
+- Uvicorn
+- Sentence Transformers
+- Scikit-Learn
+- Pandas
+
+### Frontend
+- React
+- Vite
+- Axios
+
+### AI
+- all-MiniLM-L6-v2
+- Semantic Search
+- Cosine Similarity
+
+### Dataset
+- MovieLens
+- TMDB Metadata
+
+## Tech Stack
+
+### Backend
+- Python
+- FastAPI
+- Uvicorn
+- Sentence Transformers
+- Scikit-Learn
+- Pandas
+
+### Frontend
+- React
+- Vite
+- Axios
+
+### AI
+- all-MiniLM-L6-v2
+- Semantic Search
+- Cosine Similarity
+
+### Dataset
+- MovieLens
+- TMDB Metadata
+
+
+## ✅ Sprint 9 – React Router & Movie Detail
+
+### Completed Features
+
+- React Router integration
+- Dynamic routes (/movie/:id)
+- Movie Detail page
+- Axios API integration
+- FastAPI movie endpoint
+- Movie information display
+- Genre display
+- Rating display
+- Release date display
+- Improved navigation between pages
+
+### Technologies Used
+
+- React Router DOM
+- Axios
+- FastAPI
+- React Hooks (useState, useEffect, useParams)
