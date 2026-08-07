@@ -1,8 +1,31 @@
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
+
+from jose import jwt
+
+from sqlalchemy.orm import Session
+from passlib.context import CryptContext
+
+from backend.app.database import Base, engine, get_db
+from backend.app.models import User, Favorite, Rating
 from backend.app.semantic_search import semantic_search, movies
+
+
+
 # Create the FastAPI application instance
 app = FastAPI()
+Base.metadata.create_all(bind=engine)
+
+pwd_context = CryptContext(
+    schemes=["bcrypt"],
+    deprecated="auto"
+)
+SECRET_KEY = "cinemind-secret-key"
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
+ALGORITHM = "HS256"
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -100,5 +123,271 @@ def get_movie(movie_id: int):
     "overview": movie["overview"],
     "genres": movie["genres"],
     "rating": movie["vote_average"],
-    "release_date": movie["release_date"]
+    "release_date": movie["release_date"],
+    "poster_path": movie["poster_path"]
 }
+
+
+@app.post("/register")
+def register_user(
+    username: str,
+    email: str,
+    password: str,
+    db: Session = Depends(get_db)
+):
+
+    existing_user = db.query(User).filter(
+        (User.username == username) |
+        (User.email == email)
+    ).first()
+
+    if existing_user:
+        raise HTTPException(
+            status_code=400,
+            detail="Username or email already exists"
+        )
+
+    hashed_password = pwd_context.hash(password)
+
+    new_user = User(
+        username=username,
+        email=email,
+        password=hashed_password
+    )
+
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return {
+        "message": "User registered successfully",
+        "user_id": new_user.id,
+        "username": new_user.username
+    }
+
+
+@app.post("/login")
+def login_user(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db)
+):
+
+    user = db.query(User).filter(
+        User.username == form_data.username
+    ).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail="Incorrect username or password"
+        )
+
+    if not pwd_context.verify(
+        form_data.password,
+        user.password
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="Incorrect username or password"
+        )
+
+    token = jwt.encode(
+        {
+            "sub": str(user.id),
+            "username": user.username
+        },
+        SECRET_KEY,
+        algorithm=ALGORITHM
+    )
+
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user_id": user.id,
+        "username": user.username
+    }
+
+def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db)
+):
+
+    try:
+
+        payload = jwt.decode(
+            token,
+            SECRET_KEY,
+            algorithms=[ALGORITHM]
+        )
+
+        user_id = payload.get("sub")
+
+        if user_id is None:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid token"
+            )
+
+    except Exception:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid token"
+        )
+
+    user = db.query(User).filter(
+        User.id == int(user_id)
+    ).first()
+
+    if user is None:
+        raise HTTPException(
+            status_code=401,
+            detail="User not found"
+        )
+
+    return user
+
+
+@app.post("/favorites/{movie_id}")
+def add_favorite(
+    movie_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+
+    existing_favorite = db.query(Favorite).filter(
+        Favorite.user_id == current_user.id,
+        Favorite.movie_id == movie_id
+    ).first()
+
+    if existing_favorite:
+        raise HTTPException(
+            status_code=400,
+            detail="Movie already in favorites"
+        )
+
+    favorite = Favorite(
+        user_id=current_user.id,
+        movie_id=movie_id
+    )
+
+    db.add(favorite)
+    db.commit()
+    db.refresh(favorite)
+
+    return {
+        "message": "Movie added to favorites",
+        "movie_id": movie_id
+    }  
+
+
+
+@app.get("/favorites")
+def get_favorites(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+
+    favorites = db.query(Favorite).filter(
+        Favorite.user_id == current_user.id
+    ).all()
+
+    return [
+        {
+            "movie_id": favorite.movie_id
+        }
+        for favorite in favorites
+    ]
+
+
+@app.delete("/favorites/{movie_id}")
+def remove_favorite(
+    movie_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+
+    favorite = db.query(Favorite).filter(
+        Favorite.user_id == current_user.id,
+        Favorite.movie_id == movie_id
+    ).first()
+
+    if favorite is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Movie is not in favorites"
+        )
+
+    db.delete(favorite)
+    db.commit()
+
+    return {
+        "message": "Movie removed from favorites",
+        "movie_id": movie_id
+    }
+
+
+@app.post("/ratings/{movie_id}")
+def rate_movie(
+    movie_id: int,
+    rating: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+
+    if rating < 1 or rating > 5:
+        raise HTTPException(
+            status_code=400,
+            detail="Rating must be between 1 and 5"
+        )
+
+    existing_rating = db.query(Rating).filter(
+        Rating.user_id == current_user.id,
+        Rating.movie_id == movie_id
+    ).first()
+
+    if existing_rating:
+
+        existing_rating.rating = rating
+
+    else:
+
+        new_rating = Rating(
+            user_id=current_user.id,
+            movie_id=movie_id,
+            rating=rating
+        )
+
+        db.add(new_rating)
+
+    db.commit()
+
+    return {
+        "message": "Movie rated successfully",
+        "movie_id": movie_id,
+        "rating": rating
+    }
+
+
+@app.get("/ratings/{movie_id}")
+def get_movie_rating(
+    movie_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+
+    rating = db.query(Rating).filter(
+        Rating.user_id == current_user.id,
+        Rating.movie_id == movie_id
+    ).first()
+
+    if rating is None:
+
+        return {
+            "movie_id": movie_id,
+            "rating": None
+        }
+
+    return {
+        "movie_id": movie_id,
+        "rating": rating.rating
+    }

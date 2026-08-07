@@ -533,3 +533,30 @@ state güncelleme = veriyi react stateine kaydeder
 
 Sprint 9 completed successfully.
 The application now supports navigation between movie search results and detailed movie pages.
+
+
+## Daily Log – Authentication, Favorites & Rating System
+
+### Completed
+
+- Implemented user registration
+- Implemented user login
+- Added password hashing with bcrypt
+- Added JWT authentication
+- Added protected FastAPI endpoints
+- Created User and Favorite database models
+- Implemented add/remove favorites
+- Connected favorites to authenticated users
+- Added Favorites page in React
+- Added movie rating system
+- Added 1–5 star rating UI
+- Connected movie ratings to the backend
+- Tested registration, login, favorites and rating functionality
+
+### Current Project Status
+
+The core user system is now functional. Users can register, log in, receive a JWT token, add/remove favorite movies and rate movies.
+
+### Next Step
+
+Implement personalized movie recommendations based on user ratings.

@@ -209,3 +209,25 @@ An AI-powered movie recommendation system that combines semantic search with a m
 - Axios
 - FastAPI
 - React Hooks (useState, useEffect, useParams)
+
+
+### Authentication & User Features
+
+- User registration and login
+- Password hashing with bcrypt
+- JWT-based authentication
+- Protected API endpoints
+- User-specific favorites
+- Add/remove favorite movies
+- User movie ratings (1–5 stars)
+
+### Frontend Features
+
+- React-based frontend
+- React Router navigation
+- Movie search
+- Movie detail page
+- Movie posters and metadata
+- Favorites page
+- Login and Register pages
+- Interactive movie rating system

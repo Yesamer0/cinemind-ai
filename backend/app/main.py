@@ -1,3 +1,6 @@
+from backend.app.database import Base, engine
+from backend.app.models import User
+
 import pandas as pd
 from recommender import (
     top_rated_movies,
