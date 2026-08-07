@@ -1,5 +1,6 @@
 import pickle
 import os
+import pandas as pd
 
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -26,7 +27,8 @@ movies = movies[
         "overview",
         "genres",
         "vote_average",
-        "release_date"
+        "release_date",
+        "poster_path"
     ]
 ]
 movies = movies.dropna(subset=["overview"])
@@ -81,12 +83,14 @@ def semantic_search(query, top_n=5):
     for idx in top_indices:
         results.append({
     "id": int(idx),
-    "title": movies.iloc[idx]["title"],
-    "overview": movies.iloc[idx]["overview"],
-    "genres": movies.iloc[idx]["genres"],
-    "rating": movies.iloc[idx]["vote_average"],
-    "release_date": movies.iloc[idx]["release_date"],
-    "score": round(float(similarities[idx]), 3)
+    "title": str(movies.iloc[idx]["title"]),
+    "overview": str(movies.iloc[idx]["overview"]),
+    "score": round(float(similarities[idx]), 3),
+    "poster_path": (
+        None
+        if pd.isna(movies.iloc[idx]["poster_path"])
+        else str(movies.iloc[idx]["poster_path"])
+    )
 })
 
     return results

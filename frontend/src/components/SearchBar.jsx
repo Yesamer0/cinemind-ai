@@ -6,21 +6,18 @@ function SearchBar({ setMovies, setLoading, setError }) {
 
   async function handleSearch() {
     try {
-
-    setError("");
-
-    setLoading(true);
+      setError("");
+      setLoading(true);
 
       const response = await axios.get(
-    `http://127.0.0.1:8000/search?query=${searchText}`
-);
+        `http://127.0.0.1:8000/search?query=${searchText}`
+      );
 
-setMovies(response.data.results);
+      setMovies(response.data.results);
 
-      setMovies(data.results);
     } catch (error) {
       setError("Something went wrong.");
-console.error(error);
+      console.error(error);
     } finally {
       setLoading(false);
     }
