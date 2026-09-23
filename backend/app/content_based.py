@@ -1,14 +1,20 @@
 import pandas as pd
 import re
+import nltk
+
+from nltk.stem import WordNetLemmatizer
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
+
+from backend.app.data_loader import load_tmdb_movies
+
 
 tfidf = None
 tfidf_matrix = None
 movies = None
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
 
-from data_loader import load_tmdb_movies
-from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
+lemmatizer = WordNetLemmatizer()
 def prepare_movies():
     movies = load_tmdb_movies()
     movies = movies.dropna(subset=["overview"])
@@ -38,6 +44,8 @@ def create_tfidf_matrix():
     movies = movies.dropna(
         subset=["overview"]
     )
+
+    movies = movies.reset_index(drop=True)
 
     # Boş overview'leri boş string yap
     movies["overview"] = movies[
@@ -114,24 +122,33 @@ def clean_text(text):
     if not isinstance(text, str):
         return ""
 
+    # 1. Küçük harfe çevir
     text = text.lower()
 
+    # 2. Gereksiz karakterleri temizle
     text = re.sub(
         r"[^a-zA-Z\s]",
         "",
         text
     )
 
+    # 3. Kelimelere ayır
     words = text.split()
 
+    # 4. Stopwords temizle
     words = [
         word
         for word in words
         if word not in ENGLISH_STOP_WORDS
     ]
 
-    return " ".join(words)
+    # 5. Lemmatization
+    words = [
+        lemmatizer.lemmatize(word)
+        for word in words
+    ]
 
+    return " ".join(words)
 
 
 

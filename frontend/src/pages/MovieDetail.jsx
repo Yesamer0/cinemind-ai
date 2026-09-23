@@ -2,6 +2,23 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import axios from "axios";
 
+function formatGenres(genres) {
+    if (!genres) return "Unknown";
+
+    const matches = String(genres).matchAll(
+        /['"]name['"]\s*:\s*['"]([^'"]+)['"]/g
+    );
+
+    const names = Array.from(
+        matches,
+        match => match[1]
+    );
+
+    return names.length > 0
+        ? names.join(" • ")
+        : String(genres).replaceAll("|", " • ");
+}
+
 function MovieDetail() {
 
     const { id } = useParams();
@@ -47,15 +64,15 @@ function MovieDetail() {
                     );
 
                     const ratingResponse = await axios.get(
-    `http://127.0.0.1:8000/ratings/${id}`,
-    {
-        headers: {
-            Authorization: `Bearer ${token}`
-        }
-    }
-);
+                        `http://127.0.0.1:8000/ratings/${id}`,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${token}`
+                            }
+                        }
+                    );
 
-setUserRating(ratingResponse.data.rating);
+                    setUserRating(ratingResponse.data.rating);
 
 
 
@@ -136,43 +153,43 @@ setUserRating(ratingResponse.data.rating);
     }
     async function handleRating(rating) {
 
-    const token = localStorage.getItem("token");
+        const token = localStorage.getItem("token");
 
-    if (!token) {
-        alert("Please login first.");
-        return;
-    }
+        if (!token) {
+            alert("Please login first.");
+            return;
+        }
 
-    try {
+        try {
 
-        setRatingLoading(true);
+            setRatingLoading(true);
 
-        await axios.post(
-            `http://127.0.0.1:8000/ratings/${id}?rating=${rating}`,
-            null,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`
+            await axios.post(
+                `http://127.0.0.1:8000/ratings/${id}?rating=${rating}`,
+                null,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
                 }
-            }
-        );
+            );
 
-        setUserRating(rating);
+            setUserRating(rating);
 
-    } catch (error) {
+        } catch (error) {
 
-        console.error(error);
+            console.error(error);
 
-        alert(
-            error.response?.data?.detail ||
-            "Could not save rating."
-        );
+            alert(
+                error.response?.data?.detail ||
+                "Could not save rating."
+            );
 
-    } finally {
+        } finally {
 
-        setRatingLoading(false);
+            setRatingLoading(false);
+        }
     }
-}
 
     if (error) {
 
@@ -201,6 +218,8 @@ setUserRating(ratingResponse.data.rating);
 
 
     if (!movie) {
+
+        
 
         return (
             <div
@@ -303,30 +322,30 @@ setUserRating(ratingResponse.data.rating);
 
                     <div style={{ marginBottom: "20px" }}>
 
-    <p style={{ marginBottom: "8px" }}>
-        Your Rating:
-    </p>
+                        <p style={{ marginBottom: "8px" }}>
+                            Your Rating:
+                        </p>
 
-    <div>
-        {[1, 2, 3, 4, 5].map((star) => (
-            <button
-                key={star}
-                onClick={() => handleRating(star)}
-                disabled={ratingLoading}
-                style={{
-                    background: "none",
-                    border: "none",
-                    fontSize: "30px",
-                    cursor: "pointer",
-                    padding: "2px"
-                }}
-            >
-                {userRating >= star ? "⭐" : "☆"}
-            </button>
-        ))}
-    </div>
+                        <div>
+                            {[1, 2, 3, 4, 5].map((star) => (
+                                <button
+                                    key={star}
+                                    onClick={() => handleRating(star)}
+                                    disabled={ratingLoading}
+                                    style={{
+                                        background: "none",
+                                        border: "none",
+                                        fontSize: "30px",
+                                        cursor: "pointer",
+                                        padding: "2px"
+                                    }}
+                                >
+                                    {userRating >= star ? "⭐" : "☆"}
+                                </button>
+                            ))}
+                        </div>
 
-</div>
+                    </div>
 
 
                     <button
@@ -380,7 +399,7 @@ setUserRating(ratingResponse.data.rating);
                         </span>
 
                         <span>
-                            🎭 {movie.genres}
+                            🎭 {formatGenres(movie.genres)}
                         </span>
 
                         <span>
