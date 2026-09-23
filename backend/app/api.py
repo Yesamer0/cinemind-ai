@@ -2,6 +2,9 @@ from fastapi import FastAPI, HTTPException, Query, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 
+import pandas as pd
+import os
+from dotenv import load_dotenv
 from jose import jwt
 
 from sqlalchemy.orm import Session
@@ -10,8 +13,12 @@ from passlib.context import CryptContext
 from backend.app.database import Base, engine, get_db
 from backend.app.models import User, Favorite, Rating
 from backend.app.semantic_search import semantic_search, movies
+from backend.app.content_based import (
+    recommend_movies,
+    recommend_by_keyword
+)
 
-
+load_dotenv("backend/.env")
 
 # Create the FastAPI application instance
 app = FastAPI()
@@ -21,7 +28,12 @@ pwd_context = CryptContext(
     schemes=["bcrypt"],
     deprecated="auto"
 )
-SECRET_KEY = "cinemind-secret-key"
+SECRET_KEY = os.getenv("SECRET_KEY")
+
+if not SECRET_KEY:
+    raise RuntimeError(
+        "SECRET_KEY is not configured."
+    )
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 ALGORITHM = "HS256"
 
@@ -59,6 +71,30 @@ def search_movies(
         "results": results
     }
 
+@app.get("/keyword-recommendations")
+def keyword_recommendations(
+    query: str = Query(
+        ...,
+        min_length=2,
+        description="Keyword for movie recommendation"
+    )
+):
+    results = recommend_by_keyword(query)
+
+    recommendations = []
+
+    for index, movie in results.iterrows():
+        recommendations.append({
+            "id": int(index),
+            "title": movie["title"],
+            "overview": movie["overview"]
+        })
+
+    return {
+        "query": query,
+        "total_results": len(recommendations),
+        "results": recommendations
+    }
 
 @app.get("/movies")
 def get_movies(
@@ -72,39 +108,74 @@ def get_movies(
     else:
         sorted_movies = movies
 
+    selected_movies = sorted_movies.iloc[
+        offset:offset + limit
+    ]
+
     results = []
 
-    end = offset + limit
-
-    for i in range(offset, min(end, len(sorted_movies))):
-
-        movie = sorted_movies.iloc[i]
+    for movie_index, movie in selected_movies.iterrows():
 
         results.append({
-            "id": i,
+            "id": int(movie_index),
             "title": movie["title"],
-            "overview": movie["overview"]
+            "overview": movie["overview"],
+            "poster_path": movie["poster_path"],
+            "rating": movie["vote_average"]
         })
 
     return results
 # Return the first 10 movies when the application starts.
 @app.get("/popular")
-def popular_movies():
+def popular_movies(
+    limit: int = Query(10, ge=1, le=50)
+):
+
+    popular = movies.copy()
+
+    # Convert numeric columns safely
+    popular["popularity"] = pd.to_numeric(
+        popular["popularity"],
+        errors="coerce"
+    )
+
+    popular["vote_count"] = pd.to_numeric(
+        popular["vote_count"],
+        errors="coerce"
+    )
+
+    # Remove rows with invalid popularity values
+    popular = popular.dropna(
+        subset=["popularity"]
+    )
+
+    # Sort movies by popularity
+    popular = popular.sort_values(
+        by="popularity",
+        ascending=False
+    ).head(limit)
 
     results = []
 
-    for i in range(10):
-
-        movie = movies.iloc[i]
+    for movie_index, movie in popular.iterrows():
 
         results.append({
-            "id": i,
+            "id": int(movie_index),
             "title": movie["title"],
-            "overview": movie["overview"]
+            "overview": movie["overview"],
+            "genres": movie["genres"],
+            "rating": movie["vote_average"],
+            "vote_count": (
+                0
+                if pd.isna(movie["vote_count"])
+                else int(movie["vote_count"])
+            ),
+            "popularity": float(movie["popularity"]),
+            "release_date": movie["release_date"],
+            "poster_path": movie["poster_path"]
         })
 
     return results
-
 
 @app.get("/movie/{movie_id}")
 def get_movie(movie_id: int):
@@ -390,4 +461,111 @@ def get_movie_rating(
     return {
         "movie_id": movie_id,
         "rating": rating.rating
+    }
+
+
+@app.get("/recommendations")
+def get_recommendations(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+
+    # Get all ratings given by the current user
+    ratings = db.query(Rating).filter(
+        Rating.user_id == current_user.id
+    ).all()
+
+    # Movies rated 4 or 5 are considered liked
+    liked_movies = [
+        rating.movie_id
+        for rating in ratings
+        if rating.rating >= 4
+    ]
+
+    if not liked_movies:
+        return {
+            "message": "Rate some movies first to get recommendations.",
+            "results": []
+        }
+
+    # Keep all rated movies so we do not recommend them again
+    rated_movie_ids = {
+        rating.movie_id
+        for rating in ratings
+    }
+
+    # Dictionary prevents duplicate recommendations
+    recommendation_map = {}
+
+    for movie_id in liked_movies:
+
+        if movie_id < 0 or movie_id >= len(movies):
+            continue
+
+        movie_title = movies.iloc[movie_id]["title"]
+
+        similar_movies = recommend_movies(
+            movie_title,
+            top_n=5
+        )
+
+        if not similar_movies:
+            continue
+
+        for recommendation in similar_movies:
+
+            title = recommendation["title"]
+            similarity = float(
+                recommendation["similarity"]
+            )
+
+            movie_match = movies[
+                movies["title"] == title
+            ]
+
+            if movie_match.empty:
+                continue
+
+            movie_index = int(
+                movie_match.index[0]
+            )
+
+            # Do not recommend movies already rated by the user
+            if movie_index in rated_movie_ids:
+                continue
+
+            movie = movie_match.iloc[0]
+
+            movie_data = {
+                "id": movie_index,
+                "title": movie["title"],
+                "overview": movie["overview"],
+                "genres": movie["genres"],
+                "rating": movie["vote_average"],
+                "release_date": movie["release_date"],
+                "poster_path": movie["poster_path"],
+                "similarity": similarity
+            }
+
+            # If the same movie appears more than once,
+            # keep the recommendation with the highest score
+            if (
+                movie_index not in recommendation_map
+                or similarity >
+                recommendation_map[movie_index]["similarity"]
+            ):
+                recommendation_map[movie_index] = movie_data
+
+    recommendations = list(
+        recommendation_map.values()
+    )
+
+    # Best matches first
+    recommendations.sort(
+        key=lambda movie: movie["similarity"],
+        reverse=True
+    )
+
+    return {
+        "results": recommendations[:10]
     }

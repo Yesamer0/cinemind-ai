@@ -560,3 +560,110 @@ The core user system is now functional. Users can register, log in, receive a JW
 ### Next Step
 
 Implement personalized movie recommendations based on user ratings.
+
+clean_text() fonksiyonun:text = text.lower ile metni küçültüyor.
+
+pip install nltk= NLTK = Natural Language Toolkit.
+Yani Python'da insan dilindeki metinleri işlememize yardımcı olan bir kütüphane.
+Biz CineMind'da kullanıcının yazdığı:
+I want a movie about space and loneliness
+gibi metinleri daha düzgün işleyebilmek için kullanacağız.
+
+NLTK → metni hazırlar 🧹
+TF-IDF → metni sayısal vektöre dönüştürür 🔢
+Cosine Similarity → iki metnin ne kadar benzer olduğunu ölçer 📐
+CineMind → buna göre film önerir 🎬
+
+lemmatization = Buradaki amaç, kelimelerin farklı biçimlerinin sistemi gereksiz yere yanıltmasını azaltmak.
+
+NLP = Natural Language Processing = Doğal dil işleme = bilgisayarların insan dilini/metinlerini analiz etmesini ve işlemesini sağlayan yapay zekâ alanıdır.
+
+Stopwords, metinde sık kullanılan ve recommendation açısından genellikle düşük bilgi taşıyan kelimelerdir.
+
+Stemming
+
+Kelimeyi basitçe köküne benzetmeye çalışır.
+
+Lemmatization
+
+Kelimenin dilbilgisel/anlamsal temel biçimini bulmaya çalışır.
+
+Örneğin bazı durumlarda stemming anlamsız bir kelime üretebilir.
+
+Bu yüzden NLP projelerinde lemmatization daha anlamlı sonuçlar verebilir.
+IDF
+
+Inverse Document Frequency
+
+Kelimenin bütün dokümanlarda ne kadar yaygın olduğuna bakar.
+
+                    CineMind AI
+                         │
+          ┌──────────────┼──────────────┐
+          ↓              ↓              ↓
+     MovieLens       Content-Based    Semantic
+    Recommendation   Recommendation   Recommendation
+          │              │              │
+          ↓              ↓              ↓
+     Rating verisi     TF-IDF        Embedding
+                                      ↓
+                                Sentence Transformer
+
+
+ data_loader.py, CineMind AI'daki film, rating, TMDB, credits, keywords ve link verilerini yükleyen veri erişim katmanıdır.
+
+AI dosyaları veriye doğrudan dosyadan değil, çoğunlukla data_loader.py üzerinden ulaşır.
+
+Day 1 23 eylül  — AI & Backend Audit
+
+CineMind AI'ın mevcut backend sistemi incelendi.
+
+Mevcut sistemde Content-Based Recommendation, TF-IDF, NLP preprocessing, lemmatization, cosine similarity, Sentence Transformer, semantic search, JWT authentication, favorites, ratings ve personalized recommendation zaten bulunmaktadır.
+
+Eksik/iyileştirilecek bölümler:
+
+Keyword Recommendation API endpoint
+Duplicate recommendation filtering
+Recommendation score sorting
+Movie ID consistency
+Popular movies endpoint improvement
+Semantic Search code cleanup
+
+Mevcut çalışan özellikler tekrar geliştirilmeyecek; eksik özellikler tamamlanacaktır.
+
+çalıştırma backend
+(Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned) ; (& c:\Users\Yeşim\OneDrive\Masaüstü\CineMind-AI\venv\Scripts\Activate.ps1)
+
+sonra bu uvicorn backend.app.api:app --reload
+Personalized Recommendation Improvement
+
+Existing personalized recommendation endpoint was improved.
+
+User ratings of 4 or 5 stars are used as liked movies.
+
+Content-Based Recommendation generates similar movies using TF-IDF and cosine similarity.
+
+Duplicate recommendations are removed.
+
+Movies already rated by the user are excluded.
+
+If the same movie is generated from multiple liked movies, the highest similarity score is preserved.
+
+Final recommendations are sorted by similarity and the top 10 results are returned.
+
+Day 1 – Step 3: Movie ID Consistency
+
+/movies endpointinde title sorting yapıldığında sıralanmış listedeki pozisyon yanlışlıkla movie ID olarak kullanılıyordu.
+
+Pandas DataFrame'in original index değeri korunarak movie ID olarak kullanılmaya başlandı.
+
+/movies ve /movie/{movie_id} endpointleri arasında ID tutarlılığı sağlandı.
+
+Movie list response'una poster_path ve rating alanları da eklendi.
+
+Keyword Search — kelimelere bakıyor
+Semantic Search — anlamı anlamaya çalışıyor
+
+CineMind AI implements two text-based recommendation approaches. The keyword-based system uses NLP preprocessing, TF-IDF vectorization and cosine similarity. The semantic search system uses a Sentence Transformer to convert movie descriptions and user queries into dense embeddings, then retrieves movies using cosine similarity. Therefore, the semantic system can capture contextual similarity beyond exact keyword overlap
+
+CineMind AI, iki metin tabanlı öneri yaklaşımı uygulamaktadır. Anahtar kelime tabanlı sistem, NLP ön işleme, TF-IDF vektörleştirme ve kosinüs benzerliği kullanır. Semantik arama sistemi ise film açıklamalarını ve kullanıcı sorgularını yoğun gömülü vektörlere dönüştürmek için bir Cümle Dönüştürücü (Sentence Transformer) kullanır ve ardından kosinüs benzerliği kullanarak filmleri bulur. Bu nedenle, semantik sistem, tam anahtar kelime örtüşmesinin ötesinde bağlamsal benzerliği yakalayabilir.

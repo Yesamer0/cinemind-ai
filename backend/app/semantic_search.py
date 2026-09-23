@@ -27,11 +27,15 @@ movies = movies[
         "overview",
         "genres",
         "vote_average",
+        "vote_count",
+        "popularity",
         "release_date",
         "poster_path"
     ]
 ]
-movies = movies.dropna(subset=["overview"])
+movies = movies.dropna(
+    subset=["overview"]
+).reset_index(drop=True)
 
 print("\nFirst Movies")
 print(movies.head())
@@ -99,19 +103,23 @@ def semantic_search(query, top_n=5):
 # It runs only when this file is executed directly.
 def main():
 
-    query = input("\nWhat kind of movie are you looking for?\n> ")
+    query = input(
+        "\nWhat kind of movie are you looking for?\n> "
+    )
 
-    results, similarities = semantic_search(query)
+    results = semantic_search(query)
 
     print("\nSemantic Search Results\n")
 
-    for index in results:
+    for movie in results:
+
         print(
-            movies.iloc[index]["title"],
+            movie["title"],
             "- Score:",
-            round(similarities[index], 3)
+            movie["score"]
         )
 
 
 if __name__ == "__main__":
     main()
+
