@@ -667,3 +667,95 @@ Semantic Search — anlamı anlamaya çalışıyor
 CineMind AI implements two text-based recommendation approaches. The keyword-based system uses NLP preprocessing, TF-IDF vectorization and cosine similarity. The semantic search system uses a Sentence Transformer to convert movie descriptions and user queries into dense embeddings, then retrieves movies using cosine similarity. Therefore, the semantic system can capture contextual similarity beyond exact keyword overlap
 
 CineMind AI, iki metin tabanlı öneri yaklaşımı uygulamaktadır. Anahtar kelime tabanlı sistem, NLP ön işleme, TF-IDF vektörleştirme ve kosinüs benzerliği kullanır. Semantik arama sistemi ise film açıklamalarını ve kullanıcı sorgularını yoğun gömülü vektörlere dönüştürmek için bir Cümle Dönüştürücü (Sentence Transformer) kullanır ve ardından kosinüs benzerliği kullanarak filmleri bulur. Bu nedenle, semantik sistem, tam anahtar kelime örtüşmesinin ötesinde bağlamsal benzerliği yakalayabilir.
+
+                    HYBRID AI
+
+Content Similarity       TMDB Rating       Popularity
+       │                      │                 │
+      %60                    %25               %15
+       │                      │                 │
+       └──────────────┬───────┴─────────────────┘
+                      ↓
+                 Hybrid Score
+                      ↓
+                  Ranking
+
+
+Sprint 10 – Hybrid Recommendation v1 ✅
+The personalized recommendation system was upgraded from similarity-only ranking to hybrid ranking. The system combines content similarity (60%), TMDB vote average (25%), and popularity (15%). The signals are normalized and combined into a final hybrid_score. Recommendations are now ranked according to the hybrid score instead of content similarity alone.
+
+
+Sprint 10 – Semantic Hybrid Recommendation v2 ✅
+Sentence Transformer embeddings were integrated into the personalized recommendation pipeline. Existing cached movie embeddings are reused instead of recalculating embeddings. Candidate movies are generated using TF-IDF content-based recommendation and re-ranked using semantic similarity, TMDB rating, and popularity. The final hybrid score combines 40% content similarity, 30% semantic similarity, 20% TMDB rating, and 10% popularity.
+
+Sentence Transformer:
+
+“Bu metnin anlamını sayılara dönüştür.”
+
+FAISS:
+
+“Bu sayılara en yakın olan diğer sayıları çok hızlı bul.”
+
+Hybrid Recommendation:
+
+“Bulduğumuz adaylardan hangisini kullanıcıya daha üst sırada göstermeliyim?”
+
+Sprint 10 – FAISS Semantic Search ✅
+FAISS was integrated into the semantic movie search system. Existing Sentence Transformer movie embeddings are normalized and stored in a FAISS IndexFlatIP vector index. User queries are converted into embeddings, normalized, and searched against 44,512 movie vectors using nearest-neighbor search. FAISS now provides the semantic search results returned by the FastAPI /search endpoint.
+
+
+Sprint 10 – FAISS Hybrid Recommendation ✅
+FAISS vector search was integrated into the personalized recommendation engine. For every movie liked by the user, the system now generates candidates from both TF-IDF content-based retrieval and FAISS semantic vector retrieval. Duplicate candidates are merged and ranked using a hybrid score combining content similarity (40%), semantic similarity (30%), TMDB rating (20%), and popularity (10%). Sentence Transformer embeddings are reused from cache, avoiding repeated movie embedding generation.
+
+                 CİNEMIND AI
+
+Kullanıcı
+   │
+   ├── Kayıt / Login
+   ├── Film arama
+   ├── Favori ❤️
+   └── Rating ⭐
+          │
+          ▼
+     FastAPI Backend
+          │
+    ┌─────┴──────────────┐
+    │                    │
+ TF-IDF            Sentence Transformer
+    │                    │
+kelime benzerliği    anlam benzerliği
+    │                    │
+    │                  FAISS
+    │                    │
+    └─────────┬──────────┘
+              ▼
+        Hybrid Score
+              │
+              ▼
+      Personalized Movies
+              │
+              ▼
+         React Frontend
+
+AI Recommendation → kullanıcının o anda yazdığı doğal dil isteğini anlıyor.
+
+Hybrid recommendation, kullanıcının geçmiş rating davranışlarını kullanarak kişiselleştirilmiş öneriler üretir. Natural-language AI recommendation ise kullanıcının o anda yazdığı isteği yorumlayarak semantic retrieval gerçekleştirir.
+
+ome.jsx
+→ AI Movie Assistant + ana sayfa yapısı
+
+App.css
+→ ana tasarım, renkler, kartlar, butonlar
+
+index.css
+→ genel body/background/yazı ayarları
+
+MovieCard.jsx
+→ film kartlarının görünümü
+
+Navbar.jsx
+→ üst menü
+
+
+Sprint 10 – AI Movie Assistant Frontend ✅
+The React Home page was integrated with the /ai-recommend endpoint. Users can now describe a desired movie in natural language, including Turkish requests. CineMind sends the request to the local Llama model, performs semantic retrieval with Sentence Transformers and FAISS, and displays the resulting movies in the frontend.

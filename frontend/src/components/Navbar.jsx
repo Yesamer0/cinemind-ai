@@ -5,7 +5,17 @@ function Navbar() {
     const navigate = useNavigate();
 
     const token = localStorage.getItem("token");
-    const user = JSON.parse(localStorage.getItem("user"));
+
+    let user = null;
+
+    try {
+        user = JSON.parse(
+            localStorage.getItem("user")
+        );
+    } catch {
+        user = null;
+    }
+
 
     function handleLogout() {
 
@@ -15,52 +25,88 @@ function Navbar() {
         navigate("/login");
     }
 
+
     return (
-        <nav
-            style={{
-                padding: "15px",
-                borderBottom: "1px solid gray",
-                marginBottom: "20px"
-            }}
-        >
+        <nav className="navbar">
 
-            <Link to="/">
-                🎬 CineMind AI
-            </Link>
+            <div className="navbar-container">
 
-            {" | "}
+                {/* LOGO */}
 
-            {!token ? (
-                <>
-                    <Link to="/login">
-                        Login
+                <Link
+                    to="/"
+                    className="navbar-logo"
+                >
+                    <div className="navbar-logo-icon">
+                        🎬
+                    </div>
+
+                    <div>
+                        <span>CineMind</span>
+                        <strong>AI</strong>
+                    </div>
+                </Link>
+
+
+                {/* RIGHT SIDE */}
+
+                <div className="navbar-links">
+
+                    <Link
+                        to="/"
+                        className="navbar-link"
+                    >
+                        Home
                     </Link>
 
-                    {" | "}
 
-                    <Link to="/register">
-                        Register
-                    </Link>
-                </>
-            ) : (
-                <>
-                    <span>
-                        👤 {user?.username}
-                    </span>
+                    {!token ? (
+                        <>
+                            <Link
+                                to="/login"
+                                className="navbar-link"
+                            >
+                                Login
+                            </Link>
 
-                    {" | "}
+                            <Link
+                                to="/register"
+                                className="navbar-register"
+                            >
+                                Get Started
+                            </Link>
+                        </>
+                    ) : (
+                        <>
+                            <Link
+                                to="/favorites"
+                                className="navbar-link"
+                            >
+                                ❤️ Favorites
+                            </Link>
 
-                    <Link to="/favorites">
-                        ❤️ Favorites
-                    </Link>
+                            <div className="navbar-user">
+                                <span className="user-avatar">
+                                    👤
+                                </span>
 
-                    {" | "}
+                                <span>
+                                    {user?.username || "User"}
+                                </span>
+                            </div>
 
-                    <button onClick={handleLogout}>
-                        Logout
-                    </button>
-                </>
-            )}
+                            <button
+                                className="navbar-logout"
+                                onClick={handleLogout}
+                            >
+                                Logout
+                            </button>
+                        </>
+                    )}
+
+                </div>
+
+            </div>
 
         </nav>
     );

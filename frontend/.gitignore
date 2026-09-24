@@ -1,46 +1,100 @@
-# Logs
-logs
-*.log
+# ==========================================
+# CineMind AI - Git Ignore
+# ==========================================
+
+
+# ------------------------------------------
+# Python
+# ------------------------------------------
+
+__pycache__/
+*.py[cod]
+*$py.class
+
+venv/
+.venv/
+env/
+ENV/
+
+
+# ------------------------------------------
+# Environment Variables / Secrets
+# ------------------------------------------
+
+.env
+.env.*
+backend/.env
+backend/.env.*
+
+# Keep example environment files if created
+!.env.example
+!backend/.env.example
+
+
+# ------------------------------------------
+# Python / AI Cache
+# ------------------------------------------
+
+.pytest_cache/
+.mypy_cache/
+.cache/
+
+movie_embeddings.pkl
+
+
+# ------------------------------------------
+# Database
+# ------------------------------------------
+
+*.db
+*.sqlite
+*.sqlite3
+
+
+# ------------------------------------------
+# Node / React
+# ------------------------------------------
+
+node_modules/
+frontend/node_modules/
+
+dist/
+frontend/dist/
+
+build/
+frontend/build/
+
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# ------------------------------------------
+# IDE
+# ------------------------------------------
+
+.vscode/
+.idea/
+
+*.code-workspace
+
+
+# ------------------------------------------
+# Operating System
+# ------------------------------------------
+
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+Thumbs.db
+desktop.ini
 
-.env
-backend/.env
 
-# Python
-__pycache__/
-*.py[cod]
-venv/
-.venv/
+# ------------------------------------------
+# Temporary Files
+# ------------------------------------------
 
-# Environment variables
-.env
-backend/.env
+*.tmp
+*.temp
+*.log
 
-# AI cache / generated model files
-movie_embeddings.pkl
-*.pkl
-
-# Database
-*.db
-*.sqlite
-*.sqlite3
+~$*

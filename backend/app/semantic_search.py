@@ -2,6 +2,9 @@ import pickle
 import os
 import pandas as pd
 
+import numpy as np
+import faiss
+
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -65,37 +68,153 @@ else:
 
 print(movie_embeddings.shape)
 
+# --------------------------------
+# FAISS VECTOR INDEX
+# --------------------------------
+
+# Convert embeddings to float32
+faiss_embeddings = np.asarray(
+    movie_embeddings,
+    dtype="float32"
+)
+
+# Normalize vectors so inner product
+# behaves like cosine similarity
+faiss.normalize_L2(faiss_embeddings)
+
+# Embedding dimension (384 for MiniLM)
+embedding_dimension = faiss_embeddings.shape[1]
+
+# Create FAISS index
+faiss_index = faiss.IndexFlatIP(
+    embedding_dimension
+)
+
+# Add all movie embeddings to the index
+faiss_index.add(
+    faiss_embeddings
+)
+
+print(
+    "FAISS index created:",
+    faiss_index.ntotal,
+    "movies"
+)
+
 def semantic_search(query, top_n=5):
 
-    # Convert user query into an embedding
-    query_embedding = model.encode(query)
+    # --------------------------------
+    # 1. Convert user query to vector
+    # --------------------------------
 
-    # Calculate cosine similarity
-    similarities = cosine_similarity(
-        [query_embedding],
-        movie_embeddings
-    )[0]
+    query_embedding = model.encode(
+        [query]
+    )
 
-    # Sort movies by similarity score
-    sorted_indices = similarities.argsort()[::-1]
+    # FAISS expects float32
+    query_embedding = np.asarray(
+        query_embedding,
+        dtype="float32"
+    )
 
-    # Get top N movie indices
-    top_indices = sorted_indices[:top_n]
+    # Same normalization used for movie embeddings
+    faiss.normalize_L2(
+        query_embedding
+    )
+
+    # --------------------------------
+    # 2. Search FAISS index
+    # --------------------------------
+
+    scores, indices = faiss_index.search(
+        query_embedding,
+        top_n
+    )
+
+    # --------------------------------
+    # 3. Prepare API results
+    # --------------------------------
 
     results = []
 
-    for idx in top_indices:
+    for score, movie_index in zip(
+        scores[0],
+        indices[0]
+    ):
+
+        # FAISS can theoretically return -1
+        # when no valid result exists
+        if movie_index == -1:
+            continue
+
+        movie = movies.iloc[
+            int(movie_index)
+        ]
+
         results.append({
-    "id": int(idx),
-    "title": str(movies.iloc[idx]["title"]),
-    "overview": str(movies.iloc[idx]["overview"]),
-    "score": round(float(similarities[idx]), 3),
-    "poster_path": (
-        None
-        if pd.isna(movies.iloc[idx]["poster_path"])
-        else str(movies.iloc[idx]["poster_path"])
+            "id": int(movie_index),
+            "title": movie["title"],
+            "overview": movie["overview"],
+            "score": float(score),
+            "poster_path": movie["poster_path"]
+        })
+
+    return results
+
+
+def faiss_similar_movies(movie_id, top_n=5):
+
+    # Check whether movie ID is valid
+    if movie_id < 0 or movie_id >= len(movie_embeddings):
+        return []
+
+    # Get the selected movie's embedding
+    query_embedding = np.asarray(
+        [movie_embeddings[movie_id]],
+        dtype="float32"
     )
-})
+
+    # Normalize for cosine-style similarity
+    faiss.normalize_L2(
+        query_embedding
+    )
+
+    # +1 because the movie itself will usually
+    # be the closest result
+    scores, indices = faiss_index.search(
+        query_embedding,
+        top_n + 1
+    )
+
+    results = []
+
+    for score, movie_index in zip(
+        scores[0],
+        indices[0]
+    ):
+
+        movie_index = int(movie_index)
+
+        # Invalid FAISS result
+        if movie_index == -1:
+            continue
+
+        # Do not recommend the same movie
+        if movie_index == movie_id:
+            continue
+
+        movie = movies.iloc[movie_index]
+
+        results.append({
+            "id": movie_index,
+            "title": movie["title"],
+            "overview": movie["overview"],
+            "poster_path": movie["poster_path"],
+            "semantic_similarity": float(score)
+        })
+
+        if len(results) >= top_n:
+            break
 
     return results
 

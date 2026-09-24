@@ -9,139 +9,101 @@ function MovieCard({ movie }) {
       ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
       : null;
 
+
+  // Different recommendation endpoints use different score names.
   const aiScore =
-    movie.score !== undefined && movie.score !== null
-      ? movie.score
-      : movie.similarity !== undefined && movie.similarity !== null
-        ? movie.similarity
-        : null;
+    movie.score ??
+    movie.hybrid_score ??
+    movie.similarity ??
+    null;
+
 
   return (
-
     <Link
       to={`/movie/${movie.id}`}
-      style={{
-        textDecoration: "none",
-        color: "inherit"
-      }}
+      className="movie-card-link"
     >
-      <div
-        style={{
-          backgroundColor: "#1c1c1c",
-          borderRadius: "16px",
-          overflow: "hidden",
-          cursor: "pointer",
-          height: "100%",
-          transition: "transform 0.2s ease, box-shadow 0.2s ease",
-          border: "1px solid #333"
-        }}
 
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = "translateY(-6px)";
-          e.currentTarget.style.boxShadow =
-            "0 10px 25px rgba(0,0,0,0.4)";
-        }}
+      <article className="movie-card">
 
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = "translateY(0)";
-          e.currentTarget.style.boxShadow = "none";
-        }}
-      >
+        <div className="movie-poster-container">
 
-        {posterUrl ? (
-          <img
-            src={posterUrl}
-            alt={movie.title}
-            onError={(e) => {
-              e.currentTarget.style.display = "none";
-              e.currentTarget.nextSibling.style.display = "flex";
-            }}
-            style={{
-              width: "100%",
-              height: "320px",
-              objectFit: "cover",
-              display: "block"
-            }}
-          />
-        ) : null}
+          {posterUrl ? (
+            <img
+              className="movie-poster"
+              src={posterUrl}
+              alt={movie.title}
+              loading="lazy"
+              onError={(event) => {
+                event.currentTarget.style.display = "none";
 
-        <div
-          style={{
-            width: "100%",
-            height: "320px",
-            backgroundColor: "#2a2a2a",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#888",
-            display: posterUrl ? "none" : "flex"
-          }}
-        >
-          No Poster
-        </div>
+                const fallback =
+                  event.currentTarget.nextElementSibling;
 
-        <div
-          style={{
-            padding: "18px"
-          }}
-        >
+                if (fallback) {
+                  fallback.style.display = "flex";
+                }
+              }}
+            />
+          ) : null}
 
-          <h2
-            style={{
-              fontSize: "20px",
-              margin: "0 0 10px",
-              color: "white"
-            }}
-          >
-            {movie.title}
-          </h2>
-
-          <p
-            style={{
-              color: "#aaa",
-              fontSize: "14px",
-              lineHeight: "1.5",
-              height: "65px",
-              overflow: "hidden",
-              marginBottom: "15px"
-            }}
-          >
-            {movie.overview}
-          </p>
 
           <div
+            className="poster-fallback"
             style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center"
+              display: posterUrl ? "none" : "flex"
             }}
           >
+            <span>🎬</span>
+            <p>No Poster</p>
+          </div>
 
-            {aiScore !== null && (
-  <strong
-    style={{
-      color: "#ffd700"
-    }}
-  >
-    🤖 {Number(aiScore).toFixed(2)}
-  </strong>
-)}
+
+          {aiScore !== null && (
+            <div className="ai-score-badge">
+              🤖 {Number(aiScore).toFixed(2)}
+            </div>
+          )}
+
+        </div>
+
+
+        <div className="movie-card-content">
+
+          <h3 className="movie-card-title">
+            {movie.title}
+          </h3>
+
+
+          <p className="movie-card-overview">
+            {movie.overview ||
+              "No description available for this movie."}
+          </p>
+
+
+          <div className="movie-card-footer">
 
             {movie.rating !== undefined &&
-              movie.rating !== null && (
-                <strong
-                  style={{
-                    color: "#fff"
-                  }}
-                >
-                  ⭐ {movie.rating}
-                </strong>
+              movie.rating !== null ? (
+                <span className="movie-rating">
+                  ⭐ {Number(movie.rating).toFixed(1)}
+                </span>
+              ) : (
+                <span className="movie-discover">
+                  View details
+                </span>
               )}
+
+            <span className="movie-arrow">
+              →
+            </span>
 
           </div>
 
         </div>
 
-      </div>
+      </article>
+
     </Link>
   );
 }

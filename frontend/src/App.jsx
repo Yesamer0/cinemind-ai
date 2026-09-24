@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
+import "./App.css";
+
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -8,35 +10,33 @@ import Navbar from "./components/Navbar";
 import NotFound from "./pages/NotFound";
 import Favorites from "./pages/Favorites";
 
-
 function App() {
-
   return (
-
     <BrowserRouter>
-    
-    <Navbar />
+
+      <Navbar />
 
       <Routes>
-
-        <Route
-          path="/favorites"
-          element={<Favorites />}
-/>
 
         <Route
           path="/"
           element={<Home />}
         />
-        <Route
-    path="/login"
-    element={<Login />}
-/>
 
-<Route
-    path="/register"
-    element={<Register />}
-/>
+        <Route
+          path="/favorites"
+          element={<Favorites />}
+        />
+
+        <Route
+          path="/login"
+          element={<Login />}
+        />
+
+        <Route
+          path="/register"
+          element={<Register />}
+        />
 
         <Route
           path="/movie/:id"
@@ -51,9 +51,7 @@ function App() {
       </Routes>
 
     </BrowserRouter>
-
   );
-
 }
 
 export default App;
