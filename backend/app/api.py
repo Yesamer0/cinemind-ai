@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 
 import pandas as pd
+from sklearn.metrics.pairwise import cosine_similarity
 import os
 from dotenv import load_dotenv
 from jose import jwt
@@ -12,11 +13,18 @@ from passlib.context import CryptContext
 
 from backend.app.database import Base, engine, get_db
 from backend.app.models import User, Favorite, Rating
-from backend.app.semantic_search import semantic_search, movies
+from backend.app.semantic_search import (
+    semantic_search,
+    faiss_similar_movies,
+    movies,
+    movie_embeddings
+)
 from backend.app.content_based import (
     recommend_movies,
     recommend_by_keyword
 )
+
+from backend.app.llm_service import understand_movie_request
 
 load_dotenv("backend/.env")
 
@@ -464,13 +472,110 @@ def get_movie_rating(
     }
 
 
+def add_hybrid_candidate(
+    recommendation_map,
+    movie,
+    movie_index,
+    content_similarity,
+    semantic_similarity
+):
+
+    # --------------------------------
+    # TMDB RATING
+    # --------------------------------
+
+    tmdb_rating = pd.to_numeric(
+        movie["vote_average"],
+        errors="coerce"
+    )
+
+    if pd.isna(tmdb_rating):
+        tmdb_rating = 0.0
+
+    normalized_rating = (
+        float(tmdb_rating) / 10.0
+    )
+
+    # --------------------------------
+    # POPULARITY
+    # --------------------------------
+
+    popularity = pd.to_numeric(
+        movie["popularity"],
+        errors="coerce"
+    )
+
+    if pd.isna(popularity):
+        popularity = 0.0
+
+    normalized_popularity = min(
+        max(
+            float(popularity) / 100.0,
+            0.0
+        ),
+        1.0
+    )
+
+    # --------------------------------
+    # FINAL HYBRID SCORE
+    # --------------------------------
+
+    hybrid_score = (
+        content_similarity * 0.40
+        + semantic_similarity * 0.30
+        + normalized_rating * 0.20
+        + normalized_popularity * 0.10
+    )
+
+    movie_data = {
+        "id": int(movie_index),
+        "title": movie["title"],
+        "overview": movie["overview"],
+        "genres": movie["genres"],
+        "rating": float(tmdb_rating),
+        "release_date": movie["release_date"],
+        "poster_path": movie["poster_path"],
+
+        "content_similarity": round(
+            float(content_similarity),
+            4
+        ),
+
+        "semantic_similarity": round(
+            float(semantic_similarity),
+            4
+        ),
+
+        "hybrid_score": round(
+            float(hybrid_score),
+            4
+        )
+    }
+
+    # Same movie can come from both TF-IDF and FAISS.
+    # Keep the version with the best hybrid score.
+    if (
+        movie_index not in recommendation_map
+        or hybrid_score >
+        recommendation_map[
+            movie_index
+        ]["hybrid_score"]
+    ):
+        recommendation_map[
+            movie_index
+        ] = movie_data
+
+
 @app.get("/recommendations")
 def get_recommendations(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
 
-    # Get all ratings given by the current user
+    # --------------------------------
+    # 1. GET USER RATINGS
+    # --------------------------------
+
     ratings = db.query(Rating).filter(
         Rating.user_id == current_user.id
     ).all()
@@ -488,39 +593,75 @@ def get_recommendations(
             "results": []
         }
 
-    # Keep all rated movies so we do not recommend them again
+    # Movies already rated by the user
     rated_movie_ids = {
         rating.movie_id
         for rating in ratings
     }
 
-    # Dictionary prevents duplicate recommendations
     recommendation_map = {}
 
-    for movie_id in liked_movies:
+    # --------------------------------
+    # 2. PROCESS EACH LIKED MOVIE
+    # --------------------------------
 
-        if movie_id < 0 or movie_id >= len(movies):
+    for liked_movie_id in liked_movies:
+
+        if (
+            liked_movie_id < 0
+            or liked_movie_id >= len(movies)
+            or liked_movie_id >= len(movie_embeddings)
+        ):
             continue
 
-        movie_title = movies.iloc[movie_id]["title"]
+        liked_movie = movies.iloc[
+            liked_movie_id
+        ]
 
-        similar_movies = recommend_movies(
-            movie_title,
-            top_n=5
+        liked_movie_title = liked_movie[
+            "title"
+        ]
+
+        liked_embedding = movie_embeddings[
+            liked_movie_id
+        ]
+
+                # ========================================
+        # A) TF-IDF CANDIDATES
+        # ========================================
+
+        # Calculate TF-IDF similarities only ONCE
+        content_candidates_extended = recommend_movies(
+            liked_movie_title,
+            top_n=20
         )
 
-        if not similar_movies:
-            continue
+        # If no recommendations are found, use empty list
+        if not content_candidates_extended:
+            content_candidates_extended = []
 
-        for recommendation in similar_movies:
+        # Top 5 will be used as direct TF-IDF candidates
+        content_candidates = content_candidates_extended[:5]
 
-            title = recommendation["title"]
-            similarity = float(
-                recommendation["similarity"]
+        # Store the top 20 scores for FAISS candidates
+        content_score_map = {
+            candidate["title"]: float(
+                candidate["similarity"]
+            )
+            for candidate in content_candidates_extended
+        }
+
+        # Process TF-IDF candidates
+        for candidate in content_candidates:
+
+            candidate_title = candidate["title"]
+
+            content_similarity = float(
+                candidate["similarity"]
             )
 
             movie_match = movies[
-                movies["title"] == title
+                movies["title"] == candidate_title
             ]
 
             if movie_match.empty:
@@ -530,42 +671,132 @@ def get_recommendations(
                 movie_match.index[0]
             )
 
-            # Do not recommend movies already rated by the user
             if movie_index in rated_movie_ids:
+                continue
+
+            if movie_index >= len(movie_embeddings):
                 continue
 
             movie = movie_match.iloc[0]
 
-            movie_data = {
-                "id": movie_index,
-                "title": movie["title"],
-                "overview": movie["overview"],
-                "genres": movie["genres"],
-                "rating": movie["vote_average"],
-                "release_date": movie["release_date"],
-                "poster_path": movie["poster_path"],
-                "similarity": similarity
-            }
+            candidate_embedding = movie_embeddings[
+                movie_index
+            ]
 
-            # If the same movie appears more than once,
-            # keep the recommendation with the highest score
+            semantic_similarity = float(
+                cosine_similarity(
+                    [liked_embedding],
+                    [candidate_embedding]
+                )[0][0]
+            )
+
+            add_hybrid_candidate(
+                recommendation_map,
+                movie,
+                movie_index,
+                content_similarity,
+                semantic_similarity
+            )
+
+        # ========================================
+        # B) FAISS SEMANTIC CANDIDATES
+        # ========================================
+
+        semantic_candidates = faiss_similar_movies(
+            liked_movie_id,
+            top_n=5
+        )
+
+        for candidate in semantic_candidates:
+
+            movie_index = candidate["id"]
+
+            if movie_index in rated_movie_ids:
+                continue
+
             if (
-                movie_index not in recommendation_map
-                or similarity >
-                recommendation_map[movie_index]["similarity"]
+                movie_index < 0
+                or movie_index >= len(movies)
             ):
-                recommendation_map[movie_index] = movie_data
+                continue
+
+            movie = movies.iloc[
+                movie_index
+            ]
+
+            semantic_similarity = float(
+                candidate["semantic_similarity"]
+            )
+
+            # Reuse TF-IDF scores calculated above
+            content_similarity = content_score_map.get(
+                movie["title"],
+                0.0
+            )
+
+            add_hybrid_candidate(
+                recommendation_map,
+                movie,
+                movie_index,
+                content_similarity,
+                semantic_similarity
+            )
+
+    # --------------------------------
+    # 3. FINAL RANKING
+    # --------------------------------
 
     recommendations = list(
         recommendation_map.values()
     )
 
-    # Best matches first
     recommendations.sort(
-        key=lambda movie: movie["similarity"],
+        key=lambda movie: movie["hybrid_score"],
         reverse=True
     )
 
     return {
         "results": recommendations[:10]
+    }
+
+
+
+@app.get("/ai-recommend")
+def ai_recommend(
+    query: str = Query(
+        ...,
+        min_length=3,
+        description="Natural language movie request"
+    )
+):
+
+    # 1. Understand the user's natural-language request
+    llm_result = understand_movie_request(
+        query
+    )
+
+    semantic_query = llm_result[
+        "semantic_query"
+    ]
+
+    # 2. Search the movie vector database
+    results = semantic_search(
+        semantic_query,
+        top_n=10
+    )
+
+    # 3. Return both the interpreted query
+    # and the movies found by FAISS
+    return {
+        "original_query": query,
+        "semantic_query": semantic_query,
+        "llm_used": llm_result.get(
+            "llm_used",
+            False
+        ),
+        "provider": llm_result.get(
+            "provider",
+            "fallback"
+        ),
+        "results": results
     }
