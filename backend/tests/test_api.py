@@ -1,5 +1,8 @@
+from datetime import datetime, timezone
+
 import pytest
 from fastapi.testclient import TestClient
+from jose import jwt
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
@@ -29,16 +32,51 @@ def client(tmp_path, monkeypatch):
 
 
 @pytest.fixture
-def headers(client):
+def registered_user(client):
     user = {"username": "tester", "email": "test@example.com", "password": "test-password"}
     assert client.post("/register", params=user).status_code == 200
-    response = client.post("/login", data={"username": user["username"], "password": user["password"]})
+    return {"username": user["username"], "password": user["password"]}
+
+
+@pytest.fixture
+def headers(client, registered_user):
+    response = client.post("/login", data=registered_user)
     assert response.status_code == 200
     return {"Authorization": f"Bearer {response.json()['access_token']}"}
 
 
 def test_home(client):
     assert client.get("/").json() == {"message": "Welcome to CineMind API!"}
+
+
+def test_login_rejects_wrong_password(client, registered_user):
+    response = client.post("/login", data={**registered_user, "password": "wrong-password"})
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Incorrect username or password"
+
+
+def test_login_issues_token_with_one_hour_expiry(client, registered_user):
+    started_at = int(datetime.now(timezone.utc).timestamp())
+    response = client.post("/login", data=registered_user)
+    finished_at = int(datetime.now(timezone.utc).timestamp())
+
+    assert response.status_code == 200
+    claims = jwt.get_unverified_claims(response.json()["access_token"])
+    assert started_at + 3600 <= claims["exp"] <= finished_at + 3600
+
+
+@pytest.mark.parametrize("expiration", [{"exp": 1}, {}], ids=["expired", "missing-exp"])
+def test_favorites_reject_invalid_expiration(client, headers, expiration):
+    token = headers["Authorization"].removeprefix("Bearer ")
+    claims = jwt.get_unverified_claims(token)
+    del claims["exp"]
+    token = jwt.encode({**claims, **expiration}, "local-test-secret", algorithm="HS256")
+
+    response = client.get("/favorites", headers={"Authorization": f"Bearer {token}"})
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Invalid token"
 
 
 def test_favorites_require_authentication(client):

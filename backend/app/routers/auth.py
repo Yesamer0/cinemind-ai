@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
@@ -10,6 +12,7 @@ from backend.app.models import User
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 ALGORITHM = "HS256"
+ACCESS_TOKEN_TTL = timedelta(hours=1)
 
 router = APIRouter()
 
@@ -81,7 +84,8 @@ def login_user(
     token = jwt.encode(
         {
             "sub": str(user.id),
-            "username": user.username
+            "username": user.username,
+            "exp": datetime.now(timezone.utc) + ACCESS_TOKEN_TTL,
         },
         request.app.state.secret_key,
         algorithm=ALGORITHM
@@ -105,7 +109,8 @@ def get_current_user(
         payload = jwt.decode(
             token,
             request.app.state.secret_key,
-            algorithms=[ALGORITHM]
+            algorithms=[ALGORITHM],
+            options={"require_exp": True},
         )
 
         user_id = int(payload["sub"])
