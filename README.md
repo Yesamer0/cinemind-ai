@@ -223,6 +223,8 @@ CineMind-AI/
 ├── backend/
 │   ├── app/
 │   │   ├── api.py
+│   │   ├── main.py
+│   │   ├── routers/
 │   │   ├── content_based.py
 │   │   ├── data_loader.py
 │   │   ├── database.py
@@ -292,11 +294,11 @@ http://127.0.0.1:8000/docs
 ### 1. Clone the repository
 
 ```bash
-git clone <your-repository-url>
-cd CineMind-AI
+git clone https://github.com/Yesamer0/cinemind-ai.git
+cd cinemind-ai
 ```
 
-### 2. Create a Python virtual environment
+### 2. Create a Python 3.12 virtual environment
 
 ```bash
 python -m venv venv
@@ -311,7 +313,8 @@ Windows:
 ### 3. Install backend dependencies
 
 ```bash
-pip install -r backend/requirements.txt
+python -m pip install -r backend/requirements.txt
+python -m nltk.downloader wordnet
 ```
 
 ### 4. Configure environment variables
@@ -330,7 +333,19 @@ SECRET_KEY=your-secret-key
 
 Do not commit this file to GitHub.
 
-### 5. Install Ollama
+### 5. Prepare the dataset and embeddings
+
+Download [The Movies Dataset](https://www.kaggle.com/datasets/rounakbanik/the-movies-dataset) and extract `movies_metadata.csv` to `dataset/tmdb/movies_metadata.csv`. The API needs only this TMDB file. If you use the credits or keywords loaders, place `credits.csv` and `keywords.csv` in the same directory. The MovieLens CSVs are already in the repository.
+
+The first semantic request builds `movie_embeddings.pkl` in the project root and downloads `all-MiniLM-L6-v2` if it is missing from the Hugging Face cache. The first request can take several minutes on CPU. To build the cache before starting the server, run this from the repository root:
+
+```bash
+python -c "from backend.app.semantic_search import load_semantic_index; load_semantic_index()"
+```
+
+Use only a locally generated pickle. If the catalog changes, stop the server and remove the old embedding cache before regenerating it. Keep the original metadata row order for an existing `cinemind.db`: stored ratings and favorites use catalog row IDs.
+
+### 6. Install Ollama
 
 CineMind uses a local Llama model through Ollama.
 
@@ -342,12 +357,12 @@ ollama run llama3.2:1b
 
 The local Ollama service should be available before using the AI Movie Assistant.
 
-### 6. Start the backend
+### 7. Start the backend
 
 From the project root:
 
 ```bash
-python -m uvicorn backend.app.api:app --reload
+python -m uvicorn backend.app.main:app --reload
 ```
 
 Backend:
@@ -362,13 +377,13 @@ Swagger:
 http://127.0.0.1:8000/docs
 ```
 
-### 7. Start the frontend
+### 8. Start the frontend
 
 Open another terminal:
 
 ```bash
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
 
@@ -379,6 +394,36 @@ http://localhost:5173
 ```
 
 ---
+
+If the API runs at a different address, set `VITE_API_BASE_URL` in `frontend/.env` before starting Vite. `VITE_TMDB_IMAGE_BASE_URL` overrides the poster CDN. For a different frontend origin, set `CORS_ORIGINS` in `backend/.env` to a comma-separated list of allowed origins.
+
+## Docker Compose
+
+Prepare `dataset/tmdb/movies_metadata.csv` as described above. Create a project-root `.env` with a local `SECRET_KEY` for Compose. Run these commands from the repository root:
+
+```bash
+docker compose up -d --build
+docker compose exec ollama ollama pull llama3.2:1b
+docker compose exec backend python -c "from backend.app.semantic_search import load_semantic_index; load_semantic_index()"
+```
+
+Open the UI at http://localhost:8080 or Swagger at http://127.0.0.1:8000/docs. Docker stores SQLite, embeddings, and the downloaded models in named volumes. The first TF-IDF request also builds an in-memory index. Stop the services with `docker compose down`.
+
+## Tests and evaluation
+
+Run from the repository root:
+
+```bash
+python -m pip install -r backend/requirements-dev.txt
+python -m pytest -q backend/tests
+python -m backend.evaluate --k 5
+```
+
+The tests use a temporary SQLite database. The evaluation uses the real semantic search pipeline and five manually labeled queries. Precision@K counts unique labeled titles in the first K ranks and divides by K, then averages across queries. The local baseline was **Precision@5 = 0.120** across these five queries. The small label sets are illustrative and do not cover every relevant title.
+
+## Demo video
+
+[Watch the CineMind AI walkthrough](docs/cinemind-demo.mp4). This captioned demo uses project screenshots to show the home page, AI assistant, personalized recommendations, movie details, and API docs.
 
 ## 🎯 Recommendation Methods
 
@@ -447,10 +492,7 @@ Possible future improvements include:
 - More advanced hybrid ranking
 - User recommendation history
 - Improved multilingual query understanding
-- Docker support
 - Cloud deployment
-- Automated testing
-- Recommendation evaluation metrics
 - Larger local LLM models
 
 ---

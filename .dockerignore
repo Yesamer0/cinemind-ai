@@ -1,0 +1,14 @@
+.git
+.env*
+**/.env*
+venv
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+dataset
+models
+notebooks
+screenshots
+docs
+*.pkl
+*.db
