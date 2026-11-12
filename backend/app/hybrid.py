@@ -11,7 +11,9 @@ def add_hybrid_candidate(
     movie,
     movie_index,
     content_similarity,
-    semantic_similarity
+    semantic_similarity,
+    *,
+    include_metadata=True,
 ):
 
     # --------------------------------
@@ -54,12 +56,9 @@ def add_hybrid_candidate(
     # FINAL HYBRID SCORE
     # --------------------------------
 
-    hybrid_score = (
-        content_similarity * 0.40
-        + semantic_similarity * 0.30
-        + normalized_rating * 0.20
-        + normalized_popularity * 0.10
-    )
+    hybrid_score = content_similarity * 0.40 + semantic_similarity * 0.30
+    if include_metadata:
+        hybrid_score = hybrid_score + normalized_rating * 0.20 + normalized_popularity * 0.10
 
     movie_data = {
         "id": int(movie_index),
@@ -102,7 +101,7 @@ def add_hybrid_candidate(
 
 
 
-def rank_recommendations(liked_movies, rated_movie_ids, limit=10):
+def rank_recommendations(liked_movies, rated_movie_ids, limit=10, *, include_metadata=True):
     movies = load_catalog()
     movie_embeddings, _ = load_semantic_index()
     recommendation_map = {}
@@ -201,7 +200,8 @@ def rank_recommendations(liked_movies, rated_movie_ids, limit=10):
                 movie,
                 movie_index,
                 content_similarity,
-                semantic_similarity
+                semantic_similarity,
+                include_metadata=include_metadata,
             )
 
         # ========================================
@@ -245,7 +245,8 @@ def rank_recommendations(liked_movies, rated_movie_ids, limit=10):
                 movie,
                 movie_index,
                 content_similarity,
-                semantic_similarity
+                semantic_similarity,
+                include_metadata=include_metadata,
             )
 
     # --------------------------------

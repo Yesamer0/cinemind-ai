@@ -1,5 +1,7 @@
 # 🎬 CineMind AI
 
+[![CI](https://github.com/Yesamer0/cinemind-ai/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Yesamer0/cinemind-ai/actions/workflows/ci.yml)
+
 **AI-Powered Personalized Movie Recommendation System**
 
 CineMind AI is a full-stack movie discovery and recommendation platform that combines traditional recommendation algorithms, NLP, semantic search, vector retrieval, personalized hybrid ranking, and a local Large Language Model (LLM).
@@ -421,29 +423,52 @@ python -m backend.evaluate --k 5
 
 The tests use a temporary SQLite database. [GitHub Actions CI](https://github.com/Yesamer0/cinemind-ai/actions/workflows/ci.yml) runs the backend tests, frontend lint, and frontend build on pull requests and pushes to `main`. CI runs without the TMDB dataset, embeddings, or Ollama.
 
-The benchmark uses [32 English queries with manually assigned TMDB IDs](dataset/eval/queries.json). The labels were set before inspecting the rankings. Each query contributes equally to the averages. Precision@5 divides unique labeled hits by five. Recall@10 divides hits by the number of labels. Binary NDCG@10 gives more credit to early hits, and MRR@10 averages the reciprocal rank of the first hit, using zero when the first ten contain no hit.
+The benchmark uses [32 English queries](dataset/eval/queries.json) and [12 paired Turkish queries](dataset/eval/queries-tr.json) with manually assigned TMDB IDs. The labels were set before inspecting the rankings. Each query contributes equally to the averages. Precision@5 divides unique labeled hits by five. Recall@10 divides hits by the number of labels. Binary NDCG@10 gives more credit to early hits, and MRR@10 averages the reciprocal rank of the first hit, using zero when the first ten contain no hit.
 
-### Text queries
+### English text queries (32)
 
-All three methods receive the same text. Query hybrid scores the union of the top 20 TF-IDF candidates and top 20 MiniLM + FAISS candidates with the production hybrid weights (40% TF-IDF, 30% semantic, 20% rating, 10% popularity).
+Each method receives the same text. Query hybrid scores the union of the top 20 TF-IDF and top 20 MiniLM + FAISS candidates with the production weights (40% TF-IDF, 30% semantic, 20% rating, 10% popularity). The ablation keeps the same candidates and text weights and sets both metadata weights to zero.
+
+BM25 uses the same cleaned overviews and vocabulary as TF-IDF with `k1=1.2` and `b=0.75`. RRF combines the top 20 BM25 and top 20 semantic results by rank with `k=60`. [BM25 reference](https://lucene.apache.org/core/10_5_2/core/org/apache/lucene/search/similarities/BM25Similarity.html) · [RRF paper](https://cormack.uwaterloo.ca/cormacksigir09-rrf.pdf)
 
 | Method | Precision@5 | Recall@10 | NDCG@10 | MRR@10 |
 | --- | ---: | ---: | ---: | ---: |
 | TF-IDF | 0.062 | 0.164 | 0.109 | 0.131 |
 | MiniLM + FAISS | 0.094 | 0.201 | 0.168 | 0.261 |
 | Query hybrid | **0.156** | **0.315** | **0.303** | **0.480** |
+| Hybrid without rating and popularity | 0.088 | 0.206 | 0.156 | 0.224 |
+| BM25 | 0.088 | 0.219 | 0.170 | 0.236 |
+| RRF (BM25 + semantic) | 0.088 | 0.253 | 0.186 | 0.256 |
 
-### Recommendations from one liked movie
+Removing both metadata signals drops NDCG@10 from 0.303 to 0.156. The experiment measures their joint contribution. Many labels come from familiar franchises, so the result may reflect how this query set rewards well-known movies.
 
-All three methods receive the first labeled movie as the seed. That movie is excluded and the remaining labels are held out. The hybrid row uses the actual personalized ranker behind `/recommendations`, which takes liked movie IDs. This single-like setup does not measure recommendations for users with longer histories.
+### Paired Turkish text queries (12)
+
+The Turkish and English versions share the same labels. Queries go directly to the rankers over English overviews. This run skips the LLM translation used by the AI assistant.
+
+| Method | Turkish P@5 | Turkish R@10 | Turkish NDCG@10 | Turkish MRR@10 | Paired English NDCG@10 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| TF-IDF | 0.000 | 0.000 | 0.000 | 0.000 | 0.201 |
+| MiniLM + FAISS | 0.000 | 0.000 | 0.000 | 0.000 | 0.189 |
+| Query hybrid | 0.000 | 0.000 | 0.000 | 0.000 | 0.327 |
+| Hybrid without rating and popularity | 0.000 | 0.000 | 0.000 | 0.000 | 0.224 |
+| BM25 | 0.000 | 0.000 | 0.000 | 0.000 | 0.232 |
+| RRF (BM25 + semantic) | 0.000 | 0.000 | 0.000 | 0.000 | 0.202 |
+
+Run just the Turkish benchmark with `python -m backend.evaluate --language tr`.
+
+### Recommendations from one liked movie (32)
+
+Each method receives the first labeled movie as the seed. The seed is excluded and the remaining labels are held out. The hybrid rows use the personalized ranker behind `/recommendations` with the metadata signals enabled or disabled. This single-like setup does not measure recommendations for users with longer histories.
 
 | Method | Precision@5 | Recall@10 | NDCG@10 | MRR@10 |
 | --- | ---: | ---: | ---: | ---: |
 | Movie-to-movie TF-IDF | 0.219 | 0.620 | 0.530 | 0.575 |
 | Movie-to-movie MiniLM + FAISS | 0.263 | **0.661** | 0.568 | 0.607 |
 | Personalized hybrid | **0.275** | **0.661** | **0.638** | **0.734** |
+| Hybrid without rating and popularity | 0.263 | **0.661** | 0.627 | 0.708 |
 
-Hybrid leads on the text benchmark and ties semantic retrieval on movie-seed Recall@10. Many labels come from familiar franchises, and each label set is incomplete. These scores describe this benchmark and should not be generalized to all searches or users.
+Metadata removal has a smaller effect here. NDCG@10 falls from 0.638 to 0.627, and Recall@10 remains 0.661.
 
 ### Why two queries originally scored zero
 
