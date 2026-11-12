@@ -1,10 +1,11 @@
 import json
+import os
 import urllib.request
 import urllib.error
 
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
-OLLAMA_MODEL = "llama3.2:1b"
+OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/api/generate")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:1b")
 
 
 def understand_movie_request(user_request):
@@ -34,7 +35,7 @@ STRICT RULES:
 Example:
 
 User:
-Sevgilimle izleyebileceğim eğlenceli ama çocukça olmayan
+Sevgilimle izleyebileceÄŸim eÄŸlenceli ama Ã§ocukÃ§a olmayan
 romantik bir film istiyorum
 
 Output:

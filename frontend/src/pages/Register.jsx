@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "../services/api";
 
 function Register() {
 
@@ -19,8 +19,8 @@ function Register() {
 
         try {
 
-            const response = await axios.post(
-                "http://127.0.0.1:8000/register",
+            const response = await api.post(
+                "/register",
                 null,
                 {
                     params: {

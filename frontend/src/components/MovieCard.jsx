@@ -1,3 +1,4 @@
+import { posterUrl as getPosterUrl } from "../services/api";
 import { Link } from "react-router-dom";
 
 function MovieCard({ movie }) {
@@ -6,7 +7,7 @@ function MovieCard({ movie }) {
     movie.poster_path &&
     typeof movie.poster_path === "string" &&
     movie.poster_path.startsWith("/")
-      ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+      ? getPosterUrl(movie.poster_path)
       : null;
 
 

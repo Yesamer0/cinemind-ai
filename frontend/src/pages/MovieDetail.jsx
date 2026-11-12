@@ -1,6 +1,7 @@
+import { posterUrl } from "../services/api";
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import axios from "axios";
+import api from "../services/api";
 
 function formatGenres(genres) {
     if (!genres) return "Unknown";
@@ -35,8 +36,8 @@ function MovieDetail() {
 
             try {
 
-                const response = await axios.get(
-                    `http://127.0.0.1:8000/movie/${id}`
+                const response = await api.get(
+                    `/movie/${id}`
                 );
 
                 setMovie(response.data);
@@ -45,8 +46,8 @@ function MovieDetail() {
 
                 if (token) {
 
-                    const favoritesResponse = await axios.get(
-                        "http://127.0.0.1:8000/favorites",
+                    const favoritesResponse = await api.get(
+                        "/favorites",
                         {
                             headers: {
                                 Authorization: `Bearer ${token}`
@@ -63,8 +64,8 @@ function MovieDetail() {
                         favoriteIds.includes(Number(id))
                     );
 
-                    const ratingResponse = await axios.get(
-                        `http://127.0.0.1:8000/ratings/${id}`,
+                    const ratingResponse = await api.get(
+                        `/ratings/${id}`,
                         {
                             headers: {
                                 Authorization: `Bearer ${token}`
@@ -111,8 +112,8 @@ function MovieDetail() {
 
             if (isFavorite) {
 
-                await axios.delete(
-                    `http://127.0.0.1:8000/favorites/${id}`,
+                await api.delete(
+                    `/favorites/${id}`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`
@@ -124,8 +125,8 @@ function MovieDetail() {
 
             } else {
 
-                await axios.post(
-                    `http://127.0.0.1:8000/favorites/${id}`,
+                await api.post(
+                    `/favorites/${id}`,
                     null,
                     {
                         headers: {
@@ -164,8 +165,8 @@ function MovieDetail() {
 
             setRatingLoading(true);
 
-            await axios.post(
-                `http://127.0.0.1:8000/ratings/${id}?rating=${rating}`,
+            await api.post(
+                `/ratings/${id}?rating=${rating}`,
                 null,
                 {
                     headers: {
@@ -289,7 +290,7 @@ function MovieDetail() {
                 {movie.poster_path && (
 
                     <img
-                        src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+                        src={posterUrl(movie.poster_path)}
                         alt={movie.title}
                         style={{
                             width: "320px",

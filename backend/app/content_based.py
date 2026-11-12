@@ -1,20 +1,21 @@
-import pandas as pd
+from functools import lru_cache
+from threading import Lock
+
 import re
-import nltk
 
 from nltk.stem import WordNetLemmatizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 
-from backend.app.data_loader import load_tmdb_movies
+from backend.app.data_loader import load_catalog, load_tmdb_movies
 
 
-tfidf = None
-tfidf_matrix = None
-movies = None
+_tfidf_lock = Lock()
 
 lemmatizer = WordNetLemmatizer()
+
+
 def prepare_movies():
     movies = load_tmdb_movies()
     movies = movies.dropna(subset=["overview"])
@@ -28,29 +29,13 @@ def prepare_movies():
     return movies
 
 def create_tfidf_matrix():
+    with _tfidf_lock:
+        return _fit_tfidf_matrix()
 
-    global tfidf
-    global tfidf_matrix
-    global movies
 
-    # Eğer model daha önce oluşturulduysa tekrar oluşturma
-    if tfidf is not None:
-        return tfidf, tfidf_matrix, movies
-
-    # TMDB verisini yükle
-    movies = load_tmdb_movies()
-
-    # Overview olmayan filmleri sil
-    movies = movies.dropna(
-        subset=["overview"]
-    )
-
-    movies = movies.reset_index(drop=True)
-
-    # Boş overview'leri boş string yap
-    movies["overview"] = movies[
-        "overview"
-    ].fillna("")
+@lru_cache(maxsize=1)
+def _fit_tfidf_matrix():
+    movies = load_catalog().copy()
 
     # Metinleri temizle
     movies["clean_overview"] = movies[

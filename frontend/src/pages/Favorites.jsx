@@ -1,6 +1,7 @@
+import { posterUrl } from "../services/api";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
+import api from "../services/api";
 
 function Favorites() {
 
@@ -23,8 +24,8 @@ function Favorites() {
             try {
 
                 // Get favorite movie IDs from backend
-                const response = await axios.get(
-                    "http://127.0.0.1:8000/favorites",
+                const response = await api.get(
+                    "/favorites",
                     {
                         headers: {
                             Authorization: `Bearer ${token}`
@@ -44,8 +45,8 @@ function Favorites() {
 
                 // Get movie details
                 const movieRequests = favoriteIds.map((id) =>
-                    axios.get(
-                        `http://127.0.0.1:8000/movie/${id}`
+                    api.get(
+                        `/movie/${id}`
                     )
                 );
 
@@ -204,7 +205,7 @@ function Favorites() {
                                 {movie.poster_path && (
 
                                     <img
-                                        src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+                                        src={posterUrl(movie.poster_path)}
                                         alt={movie.title}
                                         style={{
                                             width: "100%",

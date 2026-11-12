@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../services/api";
 
 import SearchBar from "../components/SearchBar";
 import MovieList from "../components/MovieList";
@@ -23,8 +23,8 @@ function Home() {
     useEffect(() => {
         async function loadPopularMovies() {
             try {
-                const response = await axios.get(
-                    "http://127.0.0.1:8000/popular?limit=10"
+                const response = await api.get(
+                    "/popular?limit=10"
                 );
 
                 setPopularMovies(response.data);
@@ -47,8 +47,8 @@ function Home() {
             }
 
             try {
-                const response = await axios.get(
-                    "http://127.0.0.1:8000/recommendations",
+                const response = await api.get(
+                    "/recommendations",
                     {
                         headers: {
                             Authorization: `Bearer ${token}`
@@ -89,8 +89,8 @@ function Home() {
         setSemanticQuery("");
 
         try {
-            const response = await axios.get(
-                "http://127.0.0.1:8000/ai-recommend",
+            const response = await api.get(
+                "/ai-recommend",
                 {
                     params: {
                         query: query

@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 import pandas as pd
 
 from backend.app.config import (
@@ -61,3 +63,7 @@ def load_links():
     links = pd.read_csv(LINKS_PATH)
 
     return links
+
+@lru_cache(maxsize=1)
+def load_catalog():
+    return load_tmdb_movies().dropna(subset=["overview"]).reset_index(drop=True)

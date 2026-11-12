@@ -6,7 +6,7 @@ function Navbar() {
 
     const token = localStorage.getItem("token");
 
-    let user = null;
+    let user;
 
     try {
         user = JSON.parse(

@@ -1,113 +1,76 @@
-import pickle
 import os
-import pandas as pd
+import pickle
+from functools import lru_cache
+from pathlib import Path
+from tempfile import NamedTemporaryFile
+from threading import Lock
 
-import numpy as np
 import faiss
+import numpy as np
 
-from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
+from backend.app.config import BASE_DIR
+from backend.app.data_loader import load_catalog
 
-from backend.app.data_loader import load_tmdb_movies
-
-
-print("Loading AI model...")
-
-model = SentenceTransformer("all-MiniLM-L6-v2")
-
-print("Model loaded successfully!")
+MODEL_NAME = "all-MiniLM-L6-v2"
+EMBEDDING_DIMENSION = 384
+_index_lock = Lock()
 
 
-movies = load_tmdb_movies()
-print(movies.columns.tolist())
-print("\nNumber of Movies")
-print(len(movies))
+@lru_cache(maxsize=1)
+def load_model():
+    from sentence_transformers import SentenceTransformer
+
+    return SentenceTransformer(MODEL_NAME)
 
 
-movies = movies[
-    [
-        "title",
-        "overview",
-        "genres",
-        "vote_average",
-        "vote_count",
-        "popularity",
-        "release_date",
-        "poster_path"
-    ]
-]
-movies = movies.dropna(
-    subset=["overview"]
-).reset_index(drop=True)
+def build_embeddings(path, overviews):
+    vectors = load_model().encode(overviews, show_progress_bar=True)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with NamedTemporaryFile(dir=path.parent, delete=False) as file:
+        temporary_path = Path(file.name)
+    try:
+        with temporary_path.open("wb") as file:
+            pickle.dump(vectors, file)
+        temporary_path.replace(path)
+    finally:
+        temporary_path.unlink(missing_ok=True)
+    return vectors
 
-print("\nFirst Movies")
-print(movies.head())
 
-embedding_file = "movie_embeddings.pkl"
+def load_semantic_index():
+    with _index_lock:
+        return _load_semantic_index()
 
-if os.path.exists(embedding_file):
 
-    print("Loading saved embeddings...")
+@lru_cache(maxsize=1)
+def _load_semantic_index():
+    catalog = load_catalog()
+    path = Path(os.getenv("EMBEDDINGS_PATH", BASE_DIR / "movie_embeddings.pkl"))
+    if path.exists():
+        with path.open("rb") as file:
+            vectors = pickle.load(file)
+    else:
+        vectors = build_embeddings(path, catalog["overview"].tolist())
 
-    with open(embedding_file, "rb") as f:
-        movie_embeddings = pickle.load(f)
+    embeddings = np.array(vectors, dtype="float32", order="C", copy=True)
+    if embeddings.shape != (len(catalog), EMBEDDING_DIMENSION):
+        raise ValueError(f"{path} does not match the movie catalog. Regenerate the embeddings.")
 
-else:
+    faiss.normalize_L2(embeddings)
+    index = faiss.IndexFlatIP(EMBEDDING_DIMENSION)
+    index.add(embeddings)
+    return embeddings, index
 
-    print("Creating embeddings...")
-
-    movie_embeddings = model.encode(
-        movies["overview"].tolist(),
-        show_progress_bar=True
-    )
-
-    with open(embedding_file, "wb") as f:
-        pickle.dump(movie_embeddings, f)
-
-    print("Embeddings saved successfully!")
-
-print(movie_embeddings.shape)
-
-# --------------------------------
-# FAISS VECTOR INDEX
-# --------------------------------
-
-# Convert embeddings to float32
-faiss_embeddings = np.asarray(
-    movie_embeddings,
-    dtype="float32"
-)
-
-# Normalize vectors so inner product
-# behaves like cosine similarity
-faiss.normalize_L2(faiss_embeddings)
-
-# Embedding dimension (384 for MiniLM)
-embedding_dimension = faiss_embeddings.shape[1]
-
-# Create FAISS index
-faiss_index = faiss.IndexFlatIP(
-    embedding_dimension
-)
-
-# Add all movie embeddings to the index
-faiss_index.add(
-    faiss_embeddings
-)
-
-print(
-    "FAISS index created:",
-    faiss_index.ntotal,
-    "movies"
-)
 
 def semantic_search(query, top_n=5):
+    movies = load_catalog()
+    _, faiss_index = load_semantic_index()
 
     # --------------------------------
     # 1. Convert user query to vector
     # --------------------------------
 
-    query_embedding = model.encode(
+    query_embedding = load_model().encode(
         [query]
     )
 
@@ -163,6 +126,8 @@ def semantic_search(query, top_n=5):
 
 
 def faiss_similar_movies(movie_id, top_n=5):
+    movies = load_catalog()
+    movie_embeddings, faiss_index = load_semantic_index()
 
     # Check whether movie ID is valid
     if movie_id < 0 or movie_id >= len(movie_embeddings):
@@ -241,4 +206,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

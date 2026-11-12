@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "../services/api";
 
 function Login() {
 
@@ -23,8 +23,8 @@ function Login() {
             formData.append("username", username);
             formData.append("password", password);
 
-            const response = await axios.post(
-                "http://127.0.0.1:8000/login",
+            const response = await api.post(
+                "/login",
                 formData,
                 {
                     headers: {

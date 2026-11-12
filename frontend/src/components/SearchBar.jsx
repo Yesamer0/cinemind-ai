@@ -1,4 +1,4 @@
-import axios from "axios";
+import api from "../services/api";
 import { useState } from "react";
 
 function SearchBar({ setMovies, setLoading, setError }) {
@@ -19,8 +19,8 @@ function SearchBar({ setMovies, setLoading, setError }) {
       setError("");
       setLoading(true);
 
-      const response = await axios.get(
-        "http://127.0.0.1:8000/search",
+      const response = await api.get(
+        "/search",
         {
           params: {
             query: query
@@ -54,8 +54,8 @@ function SearchBar({ setMovies, setLoading, setError }) {
       setError("");
       setLoading(true);
 
-      const response = await axios.get(
-        "http://127.0.0.1:8000/keyword-recommendations",
+      const response = await api.get(
+        "/keyword-recommendations",
         {
           params: {
             query: query

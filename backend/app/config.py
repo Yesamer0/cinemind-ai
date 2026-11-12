@@ -1,6 +1,10 @@
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+load_dotenv(BASE_DIR / "backend" / ".env")
 
 MOVIELENS_DIR = BASE_DIR / "dataset" / "movielens"
 TMDB_DIR = BASE_DIR / "dataset" / "tmdb"
