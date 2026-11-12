@@ -137,7 +137,7 @@ def clean_text(text):
 
 
 
-def recommend_by_keyword(keyword):
+def recommend_by_keyword(keyword, top_n=10):
 
     tfidf, tfidf_matrix, movies = create_tfidf_matrix()
 
@@ -154,7 +154,7 @@ def recommend_by_keyword(keyword):
 
     similarity_scores = similarity.flatten()
 
-    indices = similarity_scores.argsort()[::-1][:10]
+    indices = similarity_scores.argsort()[::-1][:top_n]
 
     return movies.iloc[
         indices

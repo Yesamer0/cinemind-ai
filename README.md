@@ -127,7 +127,7 @@ CineMind includes:
 - User registration
 - User login
 - Password hashing with bcrypt
-- JWT authentication
+- JWT authentication with one-hour access tokens
 - Protected API endpoints
 - User-specific favorites
 - User-specific ratings
@@ -419,7 +419,20 @@ python -m pytest -q backend/tests
 python -m backend.evaluate --k 5
 ```
 
-The tests use a temporary SQLite database. The evaluation uses the real semantic search pipeline and five manually labeled queries. Precision@K counts unique labeled titles in the first K ranks and divides by K, then averages across queries. The local baseline was **Precision@5 = 0.120** across these five queries. The small label sets are illustrative and do not cover every relevant title.
+The tests use a temporary SQLite database. [GitHub Actions CI](https://github.com/Yesamer0/cinemind-ai/actions/workflows/ci.yml) runs the backend tests, frontend lint, and frontend build on pull requests and pushes to `main`. CI runs without the TMDB dataset, embeddings, or Ollama.
+
+The evaluation runs the same five manually labeled queries against TF-IDF and MiniLM + FAISS on the same TMDB catalog. Precision@K counts unique labeled titles in the first K ranks and divides by K.
+
+| Query | TF-IDF Precision@5 | Semantic Precision@5 |
+| --- | ---: | ---: |
+| Toys that come to life when humans leave | 0.000 | 0.200 |
+| Shark attacks in a seaside town | 0.200 | 0.000 |
+| Wizard school and magic lessons | 0.000 | 0.000 |
+| Dinosaur theme park where the animals escape | 0.400 | 0.400 |
+| A boxing underdog trains for a title fight | 0.000 | 0.000 |
+| **Mean** | **0.120** | **0.120** |
+
+Both methods tied on this small benchmark and found labeled titles for different queries. The labels do not cover every relevant movie, so this result does not establish how the methods compare across the full catalog.
 
 ## Demo video
 
@@ -455,7 +468,7 @@ movie_embeddings.pkl
 *.db
 ```
 
-JWT secrets should only be stored in the local `.env` file.
+JWT secrets should only be stored in the local `.env` file. Protected routes reject expired tokens and require an expiration claim. Sign in again if your session expires or you still have a token issued before expiration was introduced.
 
 ---
 
