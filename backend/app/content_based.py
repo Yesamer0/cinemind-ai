@@ -137,30 +137,14 @@ def clean_text(text):
 
 
 
+def keyword_scores(query):
+    tfidf, tfidf_matrix, _ = create_tfidf_matrix()
+    query_vector = tfidf.transform([clean_text(query)])
+    return cosine_similarity(query_vector, tfidf_matrix).ravel()
+
+
 def recommend_by_keyword(keyword, top_n=10):
-
-    tfidf, tfidf_matrix, movies = create_tfidf_matrix()
-
-    keyword = clean_text(keyword)
-
-    keyword_vector = tfidf.transform(
-        [keyword]
-    )
-
-    similarity = cosine_similarity(
-        keyword_vector,
-        tfidf_matrix
-    )
-
-    similarity_scores = similarity.flatten()
-
-    indices = similarity_scores.argsort()[::-1][:top_n]
-
-    return movies.iloc[
-        indices
-    ][
-        [
-            "title",
-            "overview"
-        ]
-    ]
+    scores = keyword_scores(keyword)
+    _, _, movies = create_tfidf_matrix()
+    indices = scores.argsort()[::-1][:top_n]
+    return movies.iloc[indices][["title", "overview"]]

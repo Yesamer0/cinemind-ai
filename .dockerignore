@@ -5,7 +5,8 @@ venv
 **/node_modules
 **/__pycache__
 **/.pytest_cache
-dataset
+dataset/*
+!dataset/eval/
 models
 notebooks
 screenshots

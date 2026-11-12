@@ -62,37 +62,16 @@ def _load_semantic_index():
     return embeddings, index
 
 
+def encode_query(query):
+    embedding = np.asarray(load_model().encode([query]), dtype="float32")
+    faiss.normalize_L2(embedding)
+    return embedding
+
+
 def semantic_search(query, top_n=5):
     movies = load_catalog()
     _, faiss_index = load_semantic_index()
-
-    # --------------------------------
-    # 1. Convert user query to vector
-    # --------------------------------
-
-    query_embedding = load_model().encode(
-        [query]
-    )
-
-    # FAISS expects float32
-    query_embedding = np.asarray(
-        query_embedding,
-        dtype="float32"
-    )
-
-    # Same normalization used for movie embeddings
-    faiss.normalize_L2(
-        query_embedding
-    )
-
-    # --------------------------------
-    # 2. Search FAISS index
-    # --------------------------------
-
-    scores, indices = faiss_index.search(
-        query_embedding,
-        top_n
-    )
+    scores, indices = faiss_index.search(encode_query(query), top_n)
 
     # --------------------------------
     # 3. Prepare API results

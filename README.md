@@ -421,18 +421,44 @@ python -m backend.evaluate --k 5
 
 The tests use a temporary SQLite database. [GitHub Actions CI](https://github.com/Yesamer0/cinemind-ai/actions/workflows/ci.yml) runs the backend tests, frontend lint, and frontend build on pull requests and pushes to `main`. CI runs without the TMDB dataset, embeddings, or Ollama.
 
-The evaluation runs the same five manually labeled queries against TF-IDF and MiniLM + FAISS on the same TMDB catalog. Precision@K counts unique labeled titles in the first K ranks and divides by K.
+The benchmark uses [32 English queries with manually assigned TMDB IDs](dataset/eval/queries.json). The labels were set before inspecting the rankings. Each query contributes equally to the averages. Precision@5 divides unique labeled hits by five. Recall@10 divides hits by the number of labels. Binary NDCG@10 gives more credit to early hits, and MRR@10 averages the reciprocal rank of the first hit, using zero when the first ten contain no hit.
 
-| Query | TF-IDF Precision@5 | Semantic Precision@5 |
-| --- | ---: | ---: |
-| Toys that come to life when humans leave | 0.000 | 0.200 |
-| Shark attacks in a seaside town | 0.200 | 0.000 |
-| Wizard school and magic lessons | 0.000 | 0.000 |
-| Dinosaur theme park where the animals escape | 0.400 | 0.400 |
-| A boxing underdog trains for a title fight | 0.000 | 0.000 |
-| **Mean** | **0.120** | **0.120** |
+### Text queries
 
-Both methods tied on this small benchmark and found labeled titles for different queries. The labels do not cover every relevant movie, so this result does not establish how the methods compare across the full catalog.
+All three methods receive the same text. Query hybrid scores the union of the top 20 TF-IDF candidates and top 20 MiniLM + FAISS candidates with the production hybrid weights (40% TF-IDF, 30% semantic, 20% rating, 10% popularity).
+
+| Method | Precision@5 | Recall@10 | NDCG@10 | MRR@10 |
+| --- | ---: | ---: | ---: | ---: |
+| TF-IDF | 0.062 | 0.164 | 0.109 | 0.131 |
+| MiniLM + FAISS | 0.094 | 0.201 | 0.168 | 0.261 |
+| Query hybrid | **0.156** | **0.315** | **0.303** | **0.480** |
+
+### Recommendations from one liked movie
+
+All three methods receive the first labeled movie as the seed. That movie is excluded and the remaining labels are held out. The hybrid row uses the actual personalized ranker behind `/recommendations`, which takes liked movie IDs. This single-like setup does not measure recommendations for users with longer histories.
+
+| Method | Precision@5 | Recall@10 | NDCG@10 | MRR@10 |
+| --- | ---: | ---: | ---: | ---: |
+| Movie-to-movie TF-IDF | 0.219 | 0.620 | 0.530 | 0.575 |
+| Movie-to-movie MiniLM + FAISS | 0.263 | **0.661** | 0.568 | 0.607 |
+| Personalized hybrid | **0.275** | **0.661** | **0.638** | **0.734** |
+
+Hybrid leads on the text benchmark and ties semantic retrieval on movie-seed Recall@10. Many labels come from familiar franchises, and each label set is incomplete. These scores describe this benchmark and should not be generalized to all searches or users.
+
+### Why two queries originally scored zero
+
+| Query | Best labeled film | TF-IDF rank | Semantic rank |
+| --- | --- | ---: | ---: |
+| Wizard school and magic lessons | Harry Potter and the Philosopher's Stone | 37 | 41 |
+| A boxing underdog trains for a title fight | Rocky | 57 | 33 |
+
+All four Harry Potter titles and all six boxing labels were present with the expected TMDB IDs. For the wizard query, semantic search ranked *Magic Camp* first and TF-IDF ranked *Magic Boy* first. Both overviews describe learning magic, while several Potter sequels center on specific events at Hogwarts. For the boxing query, *Irudhi Suttru* ranked first semantically and *The Opponent* first in TF-IDF. They are plausible matches outside the original labels. In both cases, every labeled movie fell outside the top-20 pools, so the query hybrid could not recover them.
+
+```bash
+python -m backend.evaluate --inspect "wizard school and magic lessons" --inspect "a boxing underdog trains for a title fight"
+```
+
+With Compose running, the evaluator is also available via `docker compose exec backend python -m backend.evaluate`.
 
 ## Demo video
 
@@ -469,6 +495,8 @@ movie_embeddings.pkl
 ```
 
 JWT secrets should only be stored in the local `.env` file. Protected routes reject expired tokens and require an expiration claim. Sign in again if your session expires or you still have a token issued before expiration was introduced.
+
+The frontend currently stores the bearer token in `localStorage`. JavaScript executing on the frontend origin can read it, so an XSS flaw could expose the token until it expires. A cookie-based alternative would use `HttpOnly`, `Secure`, and an appropriate `SameSite` setting, with CSRF protection for state-changing requests. `HttpOnly` prevents JavaScript from reading the cookie, while injected scripts can still make authenticated requests from the page. See the [OWASP Session Management Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html).
 
 ---
 
